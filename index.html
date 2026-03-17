@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arena 1v1 Infinite Deluxe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Version fun et nerveuse</p>
+        <h1>Arena 1v1 Infinite Deluxe</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="pill"><span>Niveau</span><strong id="levelLabel">1</strong></div>
+        <div class="pill"><span>Record</span><strong id="bestLevel">1</strong></div>
+        <div class="pill"><span>Mode</span><strong id="modeLabel">NIVEAUX</strong></div>
+        <div class="pill"><span>Arme</span><strong id="weaponLabel">RIFLE</strong></div>
+        <div class="pill"><span>FPS</span><strong id="fps">0</strong></div>
+        <button class="chip-button" id="menuButton" type="button">Menu</button>
+        <button class="chip-button" id="fullscreenButton" type="button">Plein ecran</button>
+      </div>
+    </header>
+
+    <main class="viewport">
+      <canvas id="game"></canvas>
+
+      <aside class="hud hud-left">
+        <h2>Controles</h2>
+        <div class="control-line"><span>Avancer</span><kbd id="moveForwardKey">Z</kbd></div>
+        <div class="control-line"><span>Reculer</span><kbd id="moveBackwardKey">S</kbd></div>
+        <div class="control-line"><span>Gauche</span><kbd id="moveLeftKey">Q</kbd></div>
+        <div class="control-line"><span>Droite</span><kbd id="moveRightKey">D</kbd></div>
+        <div class="control-line"><span>Dash</span><kbd id="dashKey">SHIFT</kbd></div>
+        <div class="control-line"><span>Pause</span><kbd id="pauseKey">P</kbd></div>
+        <div class="control-line"><span>Recommencer</span><kbd id="restartKey">R</kbd></div>
+        <div class="control-line"><span>Armes</span><kbd>1 2 3 4</kbd></div>
+        <p class="hint">Souris pour viser, clic gauche pour tirer.</p>
+      </aside>
+
+      <aside class="hud hud-right">
+        <div class="stat">
+          <span>Vie</span>
+          <div class="bar"><div id="playerHp" class="fill player"></div></div>
+        </div>
+        <div class="stat">
+          <span>Energie</span>
+          <div class="bar"><div id="playerEnergy" class="fill energy"></div></div>
+        </div>
+        <div class="stat">
+          <span>Enemy 1</span>
+          <div class="bar"><div id="enemyHp" class="fill enemy"></div></div>
+        </div>
+        <div class="stat hidden" id="allyStat">
+          <span>Allie</span>
+          <div class="bar"><div id="allyHp" class="fill ally"></div></div>
+        </div>
+        <div class="stat hidden" id="enemyTwoStat">
+          <span>Enemy 2</span>
+          <div class="bar"><div id="enemyTwoHp" class="fill enemy2"></div></div>
+        </div>
+        <p class="status" id="statusText">Appuyez sur Jouer pour lancer la partie.</p>
+      </aside>
+    </main>
+  </div>
+
+  <section class="hub-overlay" id="hubOverlay" aria-hidden="false">
+    <div class="hub-card">
+      <div class="hub-head">
+        <div>
+          <p class="eyebrow">Hub</p>
+          <h2>Le coin du chaos</h2>
+        </div>
+        <div class="hub-actions">
+          <button class="chip-button" id="closeHubButton" type="button">Fermer</button>
+        </div>
+      </div>
+
+      <nav class="hub-tabs">
+        <button class="tab-button active" type="button" data-tab="play">Jouer</button>
+        <button class="tab-button" type="button" data-tab="skins">Skins</button>
+        <button class="tab-button" type="button" data-tab="records">Records</button>
+        <button class="tab-button" type="button" data-tab="audio">Audio</button>
+        <button class="tab-button" type="button" data-tab="controls">Controles</button>
+      </nav>
+
+      <section class="tab-panel active" data-panel="play">
+        <div class="grid-two">
+          <div class="menu-card">
+            <h3>Mode</h3>
+            <div class="choice-row" id="modeChoices">
+              <button class="menu-choice active" type="button" data-mode="levels">Niveaux</button>
+              <button class="menu-choice" type="button" data-mode="duo">2v2 assist</button>
+              <button class="menu-choice" type="button" data-mode="chaos">Chaos</button>
+            </div>
+            <p class="hint">`Niveaux` progresse a l'infini. `2v2` ajoute un allie. `Chaos` envoie plus d'ennemis.</p>
+          </div>
+
+          <div class="menu-card">
+            <h3>Arme</h3>
+            <div class="choice-row" id="weaponChoices">
+              <button class="menu-choice active" type="button" data-weapon="rifle">Rifle</button>
+              <button class="menu-choice" type="button" data-weapon="shotgun">Shotgun</button>
+              <button class="menu-choice" type="button" data-weapon="sniper">Sniper</button>
+              <button class="menu-choice" type="button" data-weapon="burst">Rafale</button>
+            </div>
+            <p class="hint">`1 2 3 4` changent aussi l'arme en jeu.</p>
+          </div>
+        </div>
+
+        <div class="menu-card">
+          <h3>Projectiles</h3>
+          <div class="settings-grid compact">
+            <label class="setting">
+              <span>Taille des balles</span>
+              <input id="bulletSize" type="range" min="4" max="12" step="1">
+              <strong id="bulletSizeValue">6</strong>
+            </label>
+
+            <label class="setting">
+              <span>Couleur des balles</span>
+              <input id="bulletColor" type="color" value="#63ebff">
+              <strong id="bulletColorValue">#63EBFF</strong>
+            </label>
+
+            <label class="setting">
+              <span>Degats</span>
+              <input id="bulletDamage" type="range" min="6" max="25" step="1">
+              <strong id="bulletDamageValue">11</strong>
+            </label>
+
+            <div class="setting">
+              <span>Apercu</span>
+              <div class="bullet-preview-shell">
+                <div id="bulletPreview" class="bullet-preview"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="play-footer">
+          <p class="hint">Choisissez ce que vous voulez puis cliquez sur `Jouer`. Le menu rouvrable avec le bouton `Menu` ou `P`.</p>
+          <button class="hero-button" id="startButton" type="button">Jouer Maintenant</button>
+        </div>
+      </section>
+
+      <section class="tab-panel" data-panel="skins">
+        <div class="grid-two">
+          <label class="setting">
+            <span>Couleur principale</span>
+            <input id="playerColor" type="color" value="#7cf6b8">
+            <strong id="playerColorValue">#7CF6B8</strong>
+          </label>
+
+          <div class="setting">
+            <span>Apercu skin</span>
+            <div class="skin-preview-frame">
+              <div id="skinPreview" class="skin-preview-core"></div>
+            </div>
+            <div class="skin-spotlight">
+              <strong id="skinSpotlightName">Core</strong>
+              <span id="skinSpotlightTag">Classique nerveux</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="menu-card shop-card">
+          <h3>Boutique de skins</h3>
+          <p class="hint" id="shopHint">Certaines skins se debloquent avec votre record.</p>
+          <div id="shopGrid" class="shop-grid"></div>
+        </div>
+      </section>
+
+      <section class="tab-panel" data-panel="records">
+        <div class="stats-grid">
+          <div class="setting stat-tile">
+            <span>Meilleur niveau</span>
+            <strong id="recordBestLevel">1</strong>
+          </div>
+          <div class="setting stat-tile">
+            <span>Ennemis vaincus</span>
+            <strong id="recordKills">0</strong>
+          </div>
+          <div class="setting stat-tile">
+            <span>Tirs lances</span>
+            <strong id="recordShots">0</strong>
+          </div>
+          <div class="setting stat-tile">
+            <span>Pommes mangees</span>
+            <strong id="recordApples">0</strong>
+          </div>
+          <div class="setting stat-tile">
+            <span>Dashs utilises</span>
+            <strong id="recordDashes">0</strong>
+          </div>
+          <div class="setting stat-tile">
+            <span>Pack de son actif</span>
+            <strong id="recordSoundPack">PROUT</strong>
+          </div>
+        </div>
+
+        <div class="menu-card">
+          <h3>Deblocages et vibes</h3>
+          <div class="record-lines">
+            <p><span>Skin equipe:</span> <strong id="recordCurrentSkin">Core</strong></p>
+            <p><span>Arme favorite du moment:</span> <strong id="recordCurrentWeapon">RIFLE</strong></p>
+            <p><span>Mode choisi:</span> <strong id="recordCurrentMode">NIVEAUX</strong></p>
+            <p><span>Ambiance:</span> <strong id="recordMood">Chaos propre</strong></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-panel" data-panel="audio">
+        <div class="settings-grid">
+          <label class="setting">
+            <span>Volume global</span>
+            <input id="masterVolume" type="range" min="0" max="100" step="1">
+            <strong id="masterVolumeValue">100%</strong>
+          </label>
+
+          <label class="setting">
+            <span>Volume dash</span>
+            <input id="dashVolume" type="range" min="0" max="100" step="1">
+            <strong id="dashVolumeValue">100%</strong>
+          </label>
+
+          <label class="setting">
+            <span>Pack de sons</span>
+            <select id="soundPack">
+              <option value="arcade">Arcade</option>
+              <option value="prout">Prout blaster</option>
+              <option value="coincoin">Coin coin</option>
+              <option value="party">Party bizarre</option>
+            </select>
+          </label>
+
+          <label class="setting">
+            <span>FPS max</span>
+            <select id="fpsCap">
+              <option value="60">60 FPS</option>
+              <option value="120">120 FPS</option>
+              <option value="144">144 FPS</option>
+              <option value="0">Illimite</option>
+            </select>
+          </label>
+
+          <label class="setting toggle">
+            <span>Plein ecran au demarrage</span>
+            <input id="autoFullscreen" type="checkbox">
+          </label>
+
+          <label class="setting toggle">
+            <span>Redemarrage auto apres mort</span>
+            <input id="autoRestart" type="checkbox">
+          </label>
+
+          <label class="setting">
+            <span>Delai restart</span>
+            <input id="restartDelay" type="range" min="1" max="5" step="1">
+            <strong id="restartDelayValue">2 s</strong>
+          </label>
+        </div>
+      </section>
+
+      <section class="tab-panel" data-panel="controls">
+        <div class="menu-card">
+          <h3>Touches</h3>
+          <div class="bindings-grid">
+            <button class="bind-button" type="button" data-action="forward">Avancer: <strong id="bindForward">Z</strong></button>
+            <button class="bind-button" type="button" data-action="backward">Reculer: <strong id="bindBackward">S</strong></button>
+            <button class="bind-button" type="button" data-action="left">Gauche: <strong id="bindLeft">Q</strong></button>
+            <button class="bind-button" type="button" data-action="right">Droite: <strong id="bindRight">D</strong></button>
+            <button class="bind-button" type="button" data-action="dash">Dash: <strong id="bindDash">SHIFT</strong></button>
+            <button class="bind-button" type="button" data-action="pause">Pause: <strong id="bindPause">P</strong></button>
+            <button class="bind-button" type="button" data-action="restart">Restart: <strong id="bindRestart">R</strong></button>
+          </div>
+          <p class="hint" id="bindingHint">Cliquez sur une touche puis appuyez sur la nouvelle touche.</p>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <script src="game.js"></script>
+</body>
+</html>

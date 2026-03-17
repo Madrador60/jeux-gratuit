@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="alienSkin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8dff90"/>
+      <stop offset="100%" stop-color="#34cc92"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="64" cy="64" rx="38" ry="46" fill="url(#alienSkin)" stroke="#103d2c" stroke-width="5"/>
+  <ellipse cx="49" cy="58" rx="12" ry="18" fill="#17171d"/>
+  <ellipse cx="79" cy="58" rx="12" ry="18" fill="#17171d"/>
+  <ellipse cx="49" cy="58" rx="5" ry="8" fill="#d8fff0"/>
+  <ellipse cx="79" cy="58" rx="5" ry="8" fill="#d8fff0"/>
+  <path d="M48 90c9 5 23 5 32 0" fill="none" stroke="#103d2c" stroke-width="5" stroke-linecap="round"/>
+  <path d="M51 18 39 6" fill="none" stroke="#103d2c" stroke-width="5" stroke-linecap="round"/>
+  <path d="M77 18 89 6" fill="none" stroke="#103d2c" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="39" cy="6" r="5" fill="#8dff90" stroke="#103d2c" stroke-width="3"/>
+  <circle cx="89" cy="6" r="5" fill="#8dff90" stroke="#103d2c" stroke-width="3"/>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="fur" x1="0" x2="1">
+      <stop offset="0%" stop-color="#ff8f45"/>
+      <stop offset="100%" stop-color="#ea5e1f"/>
+    </linearGradient>
+  </defs>
+  <path d="M34 40l14-23 14 22M94 40L80 17 66 39" fill="url(#fur)"/>
+  <circle cx="64" cy="68" r="34" fill="url(#fur)"/>
+  <path d="M44 84c10 10 30 10 40 0 0 0-9-9-20-9s-20 9-20 9z" fill="#fff1e3"/>
+  <circle cx="51" cy="64" r="4" fill="#221713"/>
+  <circle cx="77" cy="64" r="4" fill="#221713"/>
+  <circle cx="64" cy="78" r="4" fill="#221713"/>
+</svg>
