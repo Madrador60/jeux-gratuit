@@ -25,6 +25,7 @@ const ui = {
   mobileDashButton: document.getElementById("mobileDashButton"),
   mobileWeaponButton: document.getElementById("mobileWeaponButton"),
   mobileMenuButton: document.getElementById("mobileMenuButton"),
+  rotateNotice: document.getElementById("rotateNotice"),
   hubOverlay: document.getElementById("hubOverlay"),
   closeHubButton: document.getElementById("closeHubButton"),
   tabButtons: [...document.querySelectorAll(".tab-button")],
@@ -371,6 +372,10 @@ function syncMobileMode() {
   mobile.enabled = next;
   ui.mobileControls?.setAttribute("aria-hidden", String(!next));
   document.body.classList.toggle("mobile-ui-active", next);
+  document.body.classList.toggle("mobile-portrait", next && window.innerHeight > window.innerWidth);
+  if (ui.rotateNotice) {
+    ui.rotateNotice.setAttribute("aria-hidden", String(!(next && window.innerHeight > window.innerWidth)));
+  }
   if (!next) {
     mobile.moveTouchId = null;
     mobile.aimTouchId = null;

@@ -40,6 +40,37 @@ body::before {
   pointer-events: none;
 }
 
+.rotate-notice {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 10, 15, 0.92);
+  z-index: 300;
+}
+
+.rotate-card {
+  width: min(320px, 100%);
+  padding: 22px;
+  border-radius: 24px;
+  text-align: center;
+  background: rgba(10, 21, 30, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.34);
+}
+
+.rotate-card strong {
+  display: block;
+  font-size: 1.6rem;
+  margin-bottom: 8px;
+}
+
+.rotate-card span {
+  color: var(--muted);
+}
+
 .app-shell {
   padding: 18px;
 }
@@ -730,5 +761,103 @@ select {
   .hub-card {
     padding: 16px;
     max-height: calc(100vh - 24px);
+  }
+}
+
+@media (pointer: coarse) and (orientation: portrait) {
+  body.mobile-ui-active .rotate-notice {
+    display: flex;
+  }
+
+  body.mobile-ui-active .app-shell,
+  body.mobile-ui-active .hub-overlay {
+    visibility: hidden;
+  }
+}
+
+@media (pointer: coarse) and (orientation: landscape) {
+  .topbar {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .topbar-right {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-end;
+  }
+
+  .viewport {
+    height: calc(100vh - 90px);
+    min-height: 0;
+  }
+
+  .hud-right {
+    width: min(220px, 34vw);
+    padding: 10px;
+  }
+
+  .mobile-controls {
+    padding: 10px;
+  }
+
+  .mobile-left,
+  .mobile-right {
+    gap: 8px;
+  }
+
+  .joystick-shell {
+    width: 128px;
+    height: 128px;
+  }
+
+  .joystick-base {
+    width: 96px;
+    height: 96px;
+  }
+
+  .joystick-stick {
+    width: 48px;
+    height: 48px;
+  }
+
+  .aim-pad {
+    width: 156px;
+    height: 156px;
+  }
+
+  .mobile-buttons {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .mobile-button {
+    min-width: 68px;
+    min-height: 44px;
+    border-radius: 14px;
+    font-size: 0.95rem;
+  }
+
+  .mobile-label {
+    font-size: 0.72rem;
+    padding: 4px 8px;
+  }
+
+  .hub-card {
+    width: min(1000px, 100%);
+    max-height: calc(100vh - 14px);
+    padding: 12px;
+  }
+
+  .hub-tabs {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .tab-button,
+  .chip-button,
+  .menu-choice {
+    padding: 8px 12px;
   }
 }
