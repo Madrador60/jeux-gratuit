@@ -26,7 +26,7 @@ const ui = {
   joystickShell: document.getElementById("joystickShell"),
   joystickStick: document.getElementById("joystickStick"),
   aimPad: document.getElementById("aimPad"),
-  mobileFireButton: document.getElementById("mobileFireButton"),
+  aimStick: document.getElementById("aimStick"),
   mobileDashButton: document.getElementById("mobileDashButton"),
   mobileWeaponButton: document.getElementById("mobileWeaponButton"),
   mobileMenuButton: document.getElementById("mobileMenuButton"),
@@ -66,12 +66,16 @@ const ui = {
   closeHubButton: document.getElementById("closeHubButton"),
   tabButtons: [...document.querySelectorAll(".tab-button")],
   tabPanels: [...document.querySelectorAll(".tab-panel")],
+  shortcutTabButtons: [...document.querySelectorAll("[data-open-tab]")],
   interfaceChoices: [...document.querySelectorAll("[data-interface]")],
   modeChoices: [...document.querySelectorAll("[data-mode]")],
   weaponChoices: [...document.querySelectorAll("[data-weapon]")],
   startButton: document.getElementById("startButton"),
   shopGrid: document.getElementById("shopGrid"),
   shopHint: document.getElementById("shopHint"),
+  shopCoinsTotal: document.getElementById("shopCoinsTotal"),
+  shopPowerTotal: document.getElementById("shopPowerTotal"),
+  shopUpgradeTip: document.getElementById("shopUpgradeTip"),
   bulletStyle: document.getElementById("bulletStyle"),
   bulletPreview: document.getElementById("bulletPreview"),
   playerColor: document.getElementById("playerColor"),
@@ -490,6 +494,7 @@ function resetMobileInputs() {
   mobile.aiming = false;
   mobile.firing = false;
   ui.joystickStick.style.transform = "translate(-50%, -50%)";
+  ui.aimStick.style.transform = "translate(-50%, -50%)";
 }
 
 function playerPowerLabel() {
@@ -623,7 +628,7 @@ function mobileMoveAxis(axis) {
 }
 
 function isFiring() {
-  return pointer.down || mobile.firing || (mobile.enabled && settings.mobileAutoFire && mobile.aiming);
+  return pointer.down || (mobile.enabled && mobile.aiming);
 }
 
 function isMobileViewport() {
@@ -909,6 +914,9 @@ function renderUI() {
   ui.mobileCoinsLabel.textContent = String(progress.coins);
   ui.coinsLabel.textContent = String(progress.coins);
   ui.powerLabel.textContent = String(playerPowerLabel());
+  if (ui.shopCoinsTotal) ui.shopCoinsTotal.textContent = `${progress.coins} pieces`;
+  if (ui.shopPowerTotal) ui.shopPowerTotal.textContent = `Niveau ${playerPowerLabel()}`;
+  if (ui.shopUpgradeTip) ui.shopUpgradeTip.textContent = "Degats = frappe plus fort, Vie = tank plus, Dash = plus d'energie, Cadence = tire plus vite.";
   ui.shieldLabel.textContent = player && player.shieldTimer > 0 ? `${player.shieldTimer.toFixed(1)}s` : "OFF";
   ui.mobileWeaponButton.textContent = weaponConfigs[settings.weapon].label.replace("SHOTGUN", "POMPE");
   ui.fps.textContent = String(shownFps);
@@ -2334,10 +2342,18 @@ function updateAimFromTouch(touch) {
   const centerX = rect.left + rect.width / 2;
   const centerY = rect.top + rect.height / 2;
   const sensitivity = settings.touchSensitivity / 100;
-  mobile.aimX = (touch.clientX - centerX) * sensitivity;
-  mobile.aimY = (touch.clientY - centerY) * sensitivity;
+  const rawX = touch.clientX - centerX;
+  const rawY = touch.clientY - centerY;
+  const maxRadius = rect.width * 0.28;
+  const dist = Math.hypot(rawX, rawY) || 1;
+  const ratio = dist > maxRadius ? maxRadius / dist : 1;
+  const stickX = rawX * ratio;
+  const stickY = rawY * ratio;
+  mobile.aimX = rawX * sensitivity;
+  mobile.aimY = rawY * sensitivity;
   mobile.aiming = true;
-  mobile.firing = !settings.mobileAutoFire;
+  mobile.firing = true;
+  ui.aimStick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
   updateVirtualPointerFromAim();
 }
 
@@ -2621,6 +2637,10 @@ ui.tabButtons.forEach((button) => {
   button.addEventListener("click", () => switchTab(button.dataset.tab));
 });
 
+ui.shortcutTabButtons.forEach((button) => {
+  button.addEventListener("click", () => switchTab(button.dataset.openTab));
+});
+
 ui.interfaceChoices.forEach((button) => {
   button.addEventListener("click", () => {
     settings.interfaceMode = button.dataset.interface;
@@ -2736,19 +2756,6 @@ ui.mobileButtonScale.addEventListener("input", () => {
   quickButton?.addEventListener("click", () => purchaseUpgrade(key));
 });
 
-ui.mobileFireButton.addEventListener("pointerdown", (event) => {
-  event.preventDefault();
-  ensureAudio();
-  tryAutoFullscreen();
-  mobile.firing = !settings.mobileAutoFire;
-  vibrate(12);
-  if (overlayOpen) startMatch();
-});
-
-window.addEventListener("pointerup", () => {
-  mobile.firing = false;
-});
-
 ui.mobileDashButton.addEventListener("pointerdown", (event) => {
   event.preventDefault();
   ensureAudio();
@@ -2844,12 +2851,14 @@ ui.aimPad.addEventListener("touchend", (event) => {
   mobile.aimTouchId = null;
   mobile.aiming = false;
   mobile.firing = false;
+  ui.aimStick.style.transform = "translate(-50%, -50%)";
 }, { passive: false });
 
 ui.aimPad.addEventListener("touchcancel", () => {
   mobile.aimTouchId = null;
   mobile.aiming = false;
   mobile.firing = false;
+  ui.aimStick.style.transform = "translate(-50%, -50%)";
 }, { passive: false });
 
 document.addEventListener("touchmove", (event) => {

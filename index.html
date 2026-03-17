@@ -67,9 +67,9 @@
         <div class="mobile-right">
           <div class="aim-pad" id="aimPad">
             <div class="aim-reticle"></div>
+            <div class="aim-stick" id="aimStick"></div>
           </div>
           <div class="mobile-buttons">
-            <button class="mobile-button fire" id="mobileFireButton" type="button">Tir</button>
             <button class="mobile-button dash" id="mobileDashButton" type="button">Dash</button>
             <button class="mobile-button weapon" id="mobileWeaponButton" type="button">Arme</button>
             <button class="mobile-button menu" id="mobileMenuButton" type="button">Menu</button>
@@ -133,12 +133,33 @@
         <button class="tab-button active" type="button" data-tab="play">Jouer</button>
         <button class="tab-button" type="button" data-tab="shop">Boutique</button>
         <button class="tab-button" type="button" data-tab="skins">Skins</button>
-        <button class="tab-button" type="button" data-tab="records">Records</button>
-        <button class="tab-button" type="button" data-tab="audio">Audio</button>
-        <button class="tab-button" type="button" data-tab="controls">Controles</button>
+        <button class="tab-button" type="button" data-tab="settings">Parametres</button>
       </nav>
 
       <section class="tab-panel active" data-panel="play">
+        <div class="home-grid">
+          <button class="menu-card home-tile home-play" id="startButton" type="button">
+            <span class="eyebrow">Jouer</span>
+            <strong>Lancer la partie</strong>
+            <small>Reprend direct avec vos choix actuels.</small>
+          </button>
+          <button class="menu-card home-tile" type="button" data-open-tab="shop">
+            <span class="eyebrow">Boutique</span>
+            <strong>Ameliorations</strong>
+            <small>Depensez vos pieces plus facilement.</small>
+          </button>
+          <button class="menu-card home-tile" type="button" data-open-tab="skins">
+            <span class="eyebrow">Skins</span>
+            <strong>Changer de style</strong>
+            <small>Choisissez votre look et votre couleur.</small>
+          </button>
+          <button class="menu-card home-tile" type="button" data-open-tab="settings">
+            <span class="eyebrow">Parametres</span>
+            <strong>Reglages</strong>
+            <small>Audio, commandes, records et mobile.</small>
+          </button>
+        </div>
+
         <div class="grid-two">
           <div class="menu-card">
             <h3>Interface</h3>
@@ -201,36 +222,51 @@
             </div>
           </div>
         </div>
-
-        <div class="play-footer">
-          <p class="hint">Choisissez ce que vous voulez puis cliquez sur `Jouer`. Sur PC les armes changent avec `&`, `é`, `"` et `'`.</p>
-          <button class="hero-button" id="startButton" type="button">Jouer Maintenant</button>
-        </div>
+        <p class="hint home-hint">Sur PC les armes changent avec `&`, `é`, `"` et `'`. Le gros bouton `Jouer` relance directement avec vos choix actuels.</p>
       </section>
 
       <section class="tab-panel" data-panel="shop">
+        <div class="shop-summary">
+          <div class="setting stat-tile">
+            <span>Pieces dispo</span>
+            <strong id="shopCoinsTotal">0</strong>
+          </div>
+          <div class="setting stat-tile">
+            <span>Puissance totale</span>
+            <strong id="shopPowerTotal">1</strong>
+          </div>
+          <div class="setting stat-tile">
+            <span>Comment ca marche</span>
+            <strong id="shopUpgradeTip">Choisissez un bonus puis cliquez.</strong>
+          </div>
+        </div>
+
         <div class="menu-card">
           <h3>Boutique d'ameliorations</h3>
-          <p class="hint">Achetez vos boosts avec vos pieces pour construire votre propre build.</p>
+          <p class="hint">Chaque achat augmente un point clair. Vous gardez vos ameliorations et vos pieces ne passent jamais sous zero.</p>
           <div class="upgrade-grid">
             <button class="upgrade-button" id="upgradeAttack" type="button">
               <span>Degats</span>
               <strong id="upgradeAttackLevel">Niveau 0</strong>
+              <em>+2 degats par niveau</em>
               <small id="upgradeAttackCost">25 pieces</small>
             </button>
             <button class="upgrade-button" id="upgradeVitality" type="button">
               <span>Vie</span>
               <strong id="upgradeVitalityLevel">Niveau 0</strong>
+              <em>+20 vie max par niveau</em>
               <small id="upgradeVitalityCost">30 pieces</small>
             </button>
             <button class="upgrade-button" id="upgradeDash" type="button">
               <span>Dash</span>
               <strong id="upgradeDashLevel">Niveau 0</strong>
+              <em>+energie et dash plus fort</em>
               <small id="upgradeDashCost">35 pieces</small>
             </button>
             <button class="upgrade-button" id="upgradeFire" type="button">
               <span>Cadence</span>
               <strong id="upgradeFireLevel">Niveau 0</strong>
+              <em>Tire plus souvent</em>
               <small id="upgradeFireCost">40 pieces</small>
             </button>
           </div>
@@ -264,98 +300,97 @@
         </div>
       </section>
 
-      <section class="tab-panel" data-panel="records">
-        <div class="stats-grid">
-          <div class="setting stat-tile">
-            <span>Meilleur niveau</span>
-            <strong id="recordBestLevel">1</strong>
+      <section class="tab-panel" data-panel="settings">
+        <div class="panel-stack">
+          <div class="menu-card">
+            <h3>Records</h3>
+            <div class="stats-grid">
+              <div class="setting stat-tile">
+                <span>Meilleur niveau</span>
+                <strong id="recordBestLevel">1</strong>
+              </div>
+              <div class="setting stat-tile">
+                <span>Ennemis vaincus</span>
+                <strong id="recordKills">0</strong>
+              </div>
+              <div class="setting stat-tile">
+                <span>Tirs lances</span>
+                <strong id="recordShots">0</strong>
+              </div>
+              <div class="setting stat-tile">
+                <span>Pommes mangees</span>
+                <strong id="recordApples">0</strong>
+              </div>
+              <div class="setting stat-tile">
+                <span>Dashs utilises</span>
+                <strong id="recordDashes">0</strong>
+              </div>
+              <div class="setting stat-tile">
+                <span>Boss battus</span>
+                <strong id="recordBosses">0</strong>
+              </div>
+              <div class="setting stat-tile">
+                <span>Pieces gagnees</span>
+                <strong id="recordCoinsEarned">0</strong>
+              </div>
+              <div class="setting stat-tile">
+                <span>Temps joue</span>
+                <strong id="recordTimePlayed">0 min</strong>
+              </div>
+            </div>
+            <div class="record-lines">
+              <p><span>Skin equipe:</span> <strong id="recordCurrentSkin">Tank</strong></p>
+              <p><span>Arme favorite du moment:</span> <strong id="recordCurrentWeapon">RIFLE</strong></p>
+              <p><span>Mode choisi:</span> <strong id="recordCurrentMode">NIVEAUX</strong></p>
+              <p><span>Ambiance:</span> <strong id="recordMood">Arena nerveuse deluxe</strong></p>
+              <p><span>Arme la plus jouee:</span> <strong id="recordFavoriteWeapon">RIFLE</strong></p>
+            </div>
           </div>
-          <div class="setting stat-tile">
-            <span>Ennemis vaincus</span>
-            <strong id="recordKills">0</strong>
-          </div>
-          <div class="setting stat-tile">
-            <span>Tirs lances</span>
-            <strong id="recordShots">0</strong>
-          </div>
-          <div class="setting stat-tile">
-            <span>Pommes mangees</span>
-            <strong id="recordApples">0</strong>
-          </div>
-          <div class="setting stat-tile">
-            <span>Dashs utilises</span>
-            <strong id="recordDashes">0</strong>
-          </div>
-          <div class="setting stat-tile">
-            <span>Boss battus</span>
-            <strong id="recordBosses">0</strong>
-          </div>
-          <div class="setting stat-tile">
-            <span>Pieces gagnees</span>
-            <strong id="recordCoinsEarned">0</strong>
-          </div>
-          <div class="setting stat-tile">
-            <span>Temps joue</span>
-            <strong id="recordTimePlayed">0 min</strong>
-          </div>
-        </div>
 
-        <div class="menu-card">
-          <h3>Deblocages et vibes</h3>
-          <div class="record-lines">
-            <p><span>Skin equipe:</span> <strong id="recordCurrentSkin">Core</strong></p>
-            <p><span>Arme favorite du moment:</span> <strong id="recordCurrentWeapon">RIFLE</strong></p>
-            <p><span>Mode choisi:</span> <strong id="recordCurrentMode">NIVEAUX</strong></p>
-            <p><span>Ambiance:</span> <strong id="recordMood">Chaos propre</strong></p>
-            <p><span>Arme la plus jouee:</span> <strong id="recordFavoriteWeapon">RIFLE</strong></p>
+          <div class="menu-card">
+            <h3>Audio et jeu</h3>
+            <div class="settings-grid">
+              <label class="setting">
+                <span>Volume global</span>
+                <input id="masterVolume" type="range" min="0" max="100" step="1">
+                <strong id="masterVolumeValue">100%</strong>
+              </label>
+
+              <label class="setting">
+                <span>Volume dash</span>
+                <input id="dashVolume" type="range" min="0" max="100" step="1">
+                <strong id="dashVolumeValue">100%</strong>
+              </label>
+
+              <label class="setting">
+                <span>FPS max</span>
+                <select id="fpsCap">
+                  <option value="60">60 FPS</option>
+                  <option value="120">120 FPS</option>
+                  <option value="144">144 FPS</option>
+                  <option value="0">Illimite</option>
+                </select>
+              </label>
+
+              <label class="setting toggle">
+                <span>Plein ecran au demarrage</span>
+                <input id="autoFullscreen" type="checkbox">
+              </label>
+
+              <label class="setting toggle">
+                <span>Redemarrage auto apres mort</span>
+                <input id="autoRestart" type="checkbox">
+              </label>
+
+              <label class="setting">
+                <span>Delai restart</span>
+                <input id="restartDelay" type="range" min="1" max="5" step="1">
+                <strong id="restartDelayValue">2 s</strong>
+              </label>
+            </div>
           </div>
-        </div>
-      </section>
 
-      <section class="tab-panel" data-panel="audio">
-        <div class="settings-grid">
-          <label class="setting">
-            <span>Volume global</span>
-            <input id="masterVolume" type="range" min="0" max="100" step="1">
-            <strong id="masterVolumeValue">100%</strong>
-          </label>
-
-          <label class="setting">
-            <span>Volume dash</span>
-            <input id="dashVolume" type="range" min="0" max="100" step="1">
-            <strong id="dashVolumeValue">100%</strong>
-          </label>
-
-          <label class="setting">
-            <span>FPS max</span>
-            <select id="fpsCap">
-              <option value="60">60 FPS</option>
-              <option value="120">120 FPS</option>
-              <option value="144">144 FPS</option>
-              <option value="0">Illimite</option>
-            </select>
-          </label>
-
-          <label class="setting toggle">
-            <span>Plein ecran au demarrage</span>
-            <input id="autoFullscreen" type="checkbox">
-          </label>
-
-          <label class="setting toggle">
-            <span>Redemarrage auto apres mort</span>
-            <input id="autoRestart" type="checkbox">
-          </label>
-
-          <label class="setting">
-            <span>Delai restart</span>
-            <input id="restartDelay" type="range" min="1" max="5" step="1">
-            <strong id="restartDelayValue">2 s</strong>
-          </label>
-        </div>
-      </section>
-
-      <section class="tab-panel" data-panel="controls">
-        <div class="menu-card">
+          <div class="menu-card">
           <h3>Touches</h3>
           <div class="bindings-grid">
             <button class="bind-button" type="button" data-action="forward">Avancer: <strong id="bindForward">Z</strong></button>
@@ -367,37 +402,38 @@
             <button class="bind-button" type="button" data-action="restart">Restart: <strong id="bindRestart">R</strong></button>
           </div>
           <p class="hint" id="bindingHint">Cliquez sur une touche puis appuyez sur la nouvelle touche.</p>
-        </div>
+          </div>
 
-        <div class="menu-card mobile-settings-card" id="mobileSettingsCard">
-          <h3>Mobile</h3>
-          <div class="settings-grid">
-            <label class="setting toggle">
-              <span>Mode ultra clean</span>
-              <input id="mobileUltraClean" type="checkbox">
-            </label>
+          <div class="menu-card mobile-settings-card" id="mobileSettingsCard">
+            <h3>Mobile</h3>
+            <div class="settings-grid">
+              <label class="setting toggle">
+                <span>Mode ultra clean</span>
+                <input id="mobileUltraClean" type="checkbox">
+              </label>
 
-            <label class="setting toggle">
-              <span>Tir auto mobile</span>
-              <input id="mobileAutoFire" type="checkbox">
-            </label>
+              <label class="setting toggle">
+                <span>Tir auto mobile</span>
+                <input id="mobileAutoFire" type="checkbox">
+              </label>
 
-            <label class="setting toggle">
-              <span>Vibrations / haptics</span>
-              <input id="mobileHaptics" type="checkbox">
-            </label>
+              <label class="setting toggle">
+                <span>Vibrations / haptics</span>
+                <input id="mobileHaptics" type="checkbox">
+              </label>
 
-            <label class="setting">
-              <span>Sensibilite de visee</span>
-              <input id="touchSensitivity" type="range" min="60" max="180" step="5">
-              <strong id="touchSensitivityValue">100%</strong>
-            </label>
+              <label class="setting">
+                <span>Sensibilite de visee</span>
+                <input id="touchSensitivity" type="range" min="60" max="180" step="5">
+                <strong id="touchSensitivityValue">100%</strong>
+              </label>
 
-            <label class="setting">
-              <span>Taille des boutons</span>
-              <input id="mobileButtonScale" type="range" min="80" max="150" step="5">
-              <strong id="mobileButtonScaleValue">100%</strong>
-            </label>
+              <label class="setting">
+                <span>Taille des boutons</span>
+                <input id="mobileButtonScale" type="range" min="80" max="150" step="5">
+                <strong id="mobileButtonScaleValue">100%</strong>
+              </label>
+            </div>
           </div>
         </div>
       </section>
