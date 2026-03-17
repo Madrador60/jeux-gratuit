@@ -1315,11 +1315,7 @@ body.mobile-ui-active {
   }
 
   .topbar {
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 0;
-    padding: max(6px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) 6px max(6px, env(safe-area-inset-left));
+    display: none;
   }
 
   .eyebrow {
@@ -1333,56 +1329,18 @@ body.mobile-ui-active {
     max-width: 36vw;
   }
 
-  .topbar-right {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    justify-content: flex-end;
-    gap: 5px;
-    padding-bottom: 1px;
-    scrollbar-width: none;
-  }
-
-  .topbar-right::-webkit-scrollbar {
-    display: none;
-  }
-
   .viewport {
     flex: 1 1 auto;
     height: auto;
     min-height: 0;
-    border-radius: 16px 16px 0 0;
-    margin-top: 4px;
+    border-radius: 0;
+    margin-top: 0;
     box-shadow: none;
   }
 
-  body.mobile-ui-active .mobile-top-strip {
-    display: none;
-  }
-
+  body.mobile-ui-active .mobile-top-strip,
   body.mobile-ui-active .topbar {
-    display: flex;
-  }
-
-  body.mobile-ui-active .topbar > div:first-child {
-    display: none;
-  }
-
-  body.mobile-ui-active .topbar {
-    margin-bottom: 6px;
-    justify-content: flex-start;
-  }
-
-  body.mobile-ui-active .topbar-right {
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-inline: max(4px, env(safe-area-inset-left)) max(4px, env(safe-area-inset-right));
-  }
-
-  body.mobile-ui-active .pill,
-  body.mobile-ui-active .chip-button {
-    padding: 7px 10px;
+    display: none !important;
   }
 
   body.mobile-ui-active .hud-right .stat,
@@ -1395,52 +1353,15 @@ body.mobile-ui-active {
   }
 
   body.mobile-ui-active .hud-right {
-    top: 8px;
-    left: 8px;
-    right: auto;
-    width: 118px;
-    padding: 8px 9px;
-  }
-
-  body.mobile-ultra-clean-active .hud-left,
-  body.mobile-ultra-clean-active .hud-right .stat:not(:first-child),
-  body.mobile-ultra-clean-active .status,
-  body.mobile-ultra-clean-active .mobile-top-strip {
     display: none;
   }
 
-  body.mobile-ultra-clean-active .hud-right {
-    top: 8px;
-    left: 8px;
-    right: auto;
-    width: 132px;
-    padding: 8px 10px;
-  }
-
-  .hud-right {
-    width: min(160px, 26vw);
-    padding: 8px 9px;
-    top: 6px;
-    right: 6px;
-    border-radius: 18px;
-    background: rgba(8, 18, 25, 0.74);
-  }
-
-  .hud-right .stat {
-    margin-bottom: 8px;
-  }
-
-  .hud-right .stat span {
-    font-size: 0.84rem;
-    margin-bottom: 4px;
-  }
-
-  .bar {
-    height: 10px;
-  }
-
-  .status {
-    font-size: 0.78rem;
+  body.mobile-ultra-clean-active .hud-left,
+  body.mobile-ultra-clean-active .hud-right,
+  body.mobile-ultra-clean-active .status,
+  body.mobile-ultra-clean-active .mobile-top-strip,
+  body.mobile-ultra-clean-active .topbar {
+    display: none;
   }
 
   .mobile-controls {
@@ -1550,37 +1471,6 @@ body.mobile-ui-active {
   body.iphone-ui.mobile-ui-active .viewport {
     flex: 1 1 auto;
     height: auto;
-  }
-
-  body.iphone-ui.mobile-ui-active .mobile-top-strip {
-    top: max(4px, env(safe-area-inset-top));
-    left: max(6px, env(safe-area-inset-left));
-    right: max(6px, env(safe-area-inset-right));
-    gap: 4px;
-  }
-
-  body.iphone-ui.mobile-ui-active .mobile-badge {
-    padding: 5px 8px;
-    font-size: 0.72rem;
-  }
-
-  body.iphone-ui.mobile-ui-active .mobile-float-button {
-    padding: 7px 10px;
-    font-size: 0.78rem;
-  }
-
-  body.iphone-ui.mobile-ui-active .hud-right {
-    top: max(6px, env(safe-area-inset-top));
-    left: max(6px, env(safe-area-inset-left));
-    right: auto;
-    width: 112px;
-    padding: 6px 7px;
-  }
-
-  body.iphone-ui.mobile-ultra-clean-active .hud-right {
-    left: max(4px, env(safe-area-inset-left));
-    width: 116px;
-    padding: 6px 8px;
   }
 
   body.iphone-ui.mobile-ui-active .mobile-controls {
