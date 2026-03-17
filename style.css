@@ -186,6 +186,10 @@ input[type="range"] {
   pointer-events: none;
 }
 
+body.mobile-ui-active .mobile-controls {
+  display: flex;
+}
+
 .mobile-left,
 .mobile-right {
   display: flex;
@@ -197,12 +201,13 @@ input[type="range"] {
 .joystick-shell,
 .aim-pad {
   position: relative;
-  width: 144px;
-  height: 144px;
-  border-radius: 50%;
-  background: rgba(5, 15, 22, 0.36);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  width: 148px;
+  height: 148px;
+  border-radius: 30px;
+  background: rgba(4, 12, 18, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
   touch-action: none;
 }
 
@@ -229,9 +234,12 @@ input[type="range"] {
 }
 
 .aim-pad {
-  width: 180px;
-  height: 180px;
+  width: 188px;
+  height: 188px;
   border-radius: 28px;
+  background:
+    radial-gradient(circle at center, rgba(84, 240, 255, 0.12), transparent 52%),
+    rgba(4, 12, 18, 0.72);
 }
 
 .aim-reticle {
@@ -304,6 +312,9 @@ input[type="range"] {
 
 .mobile-label {
   margin: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(4, 12, 18, 0.68);
   text-align: center;
   color: var(--muted);
   text-transform: uppercase;
@@ -710,10 +721,6 @@ select {
 
   .status {
     font-size: 0.92rem;
-  }
-
-  .mobile-controls {
-    display: flex;
   }
 
   .hub-overlay {

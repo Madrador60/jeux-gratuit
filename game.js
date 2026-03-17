@@ -29,6 +29,7 @@ const ui = {
   closeHubButton: document.getElementById("closeHubButton"),
   tabButtons: [...document.querySelectorAll(".tab-button")],
   tabPanels: [...document.querySelectorAll(".tab-panel")],
+  interfaceChoices: [...document.querySelectorAll("[data-interface]")],
   modeChoices: [...document.querySelectorAll("[data-mode]")],
   weaponChoices: [...document.querySelectorAll("[data-weapon]")],
   startButton: document.getElementById("startButton"),
@@ -143,6 +144,7 @@ Object.entries(skinCatalog).forEach(([id, entry]) => {
 });
 
 const defaultSettings = {
+  interfaceMode: "pc",
   mode: "levels",
   weapon: "rifle",
   skin: "core",
@@ -214,7 +216,7 @@ const world = {
 function loadSettings() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_SETTINGS) || "null");
-    return {
+    const merged = {
       ...defaultSettings,
       ...parsed,
       bindings: {
@@ -222,8 +224,16 @@ function loadSettings() {
         ...(parsed?.bindings || {})
       }
     };
+    if (!parsed?.interfaceMode && window.matchMedia("(pointer: coarse)").matches) {
+      merged.interfaceMode = "mobile";
+    }
+    return merged;
   } catch {
-    return structuredClone(defaultSettings);
+    const fallback = structuredClone(defaultSettings);
+    if (window.matchMedia("(pointer: coarse)").matches) {
+      fallback.interfaceMode = "mobile";
+    }
+    return fallback;
   }
 }
 
@@ -260,6 +270,7 @@ function saveBestLevel(level) {
 }
 
 function sanitizeSettings() {
+  if (!["pc", "mobile"].includes(settings.interfaceMode)) settings.interfaceMode = "pc";
   if (!weaponConfigs[settings.weapon]) settings.weapon = "rifle";
   if (!skinCatalog[settings.skin]) settings.skin = "core";
   if (!["levels", "duo", "chaos"].includes(settings.mode)) settings.mode = "levels";
@@ -356,9 +367,10 @@ function isMobileViewport() {
 }
 
 function syncMobileMode() {
-  const next = Boolean(coarseMedia?.matches || window.innerWidth <= 820);
+  const next = settings.interfaceMode === "mobile";
   mobile.enabled = next;
   ui.mobileControls?.setAttribute("aria-hidden", String(!next));
+  document.body.classList.toggle("mobile-ui-active", next);
   if (!next) {
     mobile.moveTouchId = null;
     mobile.aimTouchId = null;
@@ -563,9 +575,7 @@ function startMatch() {
   ui.hubOverlay.classList.add("hidden");
   canvas.classList.remove("blocked");
   ensureAudio();
-  if (settings.autoFullscreen) {
-    document.documentElement.requestFullscreen?.().catch(() => {});
-  }
+  tryAutoFullscreen();
 }
 
 function switchTab(tab) {
@@ -636,6 +646,7 @@ function renderUI() {
   ui.restartDelay.value = String(settings.restartDelay);
   ui.restartDelayValue.textContent = `${settings.restartDelay} s`;
 
+  ui.interfaceChoices.forEach((button) => button.classList.toggle("active", button.dataset.interface === settings.interfaceMode));
   ui.modeChoices.forEach((button) => button.classList.toggle("active", button.dataset.mode === settings.mode));
   ui.weaponChoices.forEach((button) => button.classList.toggle("active", button.dataset.weapon === settings.weapon));
 
@@ -885,11 +896,11 @@ function fireWeapon(entity, targetX, targetY, options = {}) {
 function dash(entity, dirX, dirY) {
   if (entity.dashCooldown > 0 || entity.energy < 18 || entity.hp <= 0) return;
   const dir = normalize(dirX, dirY);
-  const power = entity === player ? 1320 : 980;
+  const power = entity === player ? 2850 : 1180;
   entity.vx += dir.x * power;
   entity.vy += dir.y * power;
   entity.energy = clamp(entity.energy - 18, 0, entity.maxEnergy);
-  entity.dashCooldown = entity === player ? 0.55 : 1.2;
+  entity.dashCooldown = entity === player ? 0.22 : 1;
   spawnBurst(entity.x, entity.y, entity.color, 14, 260);
   if (entity === player) {
     world.session.dashes += 1;
@@ -1513,6 +1524,12 @@ function requestFullscreenSafe() {
   document.documentElement.requestFullscreen?.().catch(() => {});
 }
 
+function tryAutoFullscreen() {
+  if (!settings.autoFullscreen) return;
+  if (document.fullscreenElement) return;
+  requestFullscreenSafe();
+}
+
 function tick(timestamp) {
   if (!lastTime) lastTime = timestamp;
   const rawDt = Math.min(0.05, (timestamp - lastTime) / 1000);
@@ -1558,17 +1575,27 @@ canvas.addEventListener("mousemove", (event) => {
   pointer.active = true;
 });
 
-canvas.addEventListener("mousedown", () => {
-  pointer.down = true;
-  ensureAudio();
+canvas.addEventListener("contextmenu", (event) => {
+  event.preventDefault();
 });
 
-window.addEventListener("mouseup", () => {
+canvas.addEventListener("mousedown", (event) => {
+  if (event.button !== 0) return;
+  pointer.down = true;
+  ensureAudio();
+  if (mobile.enabled) {
+    tryAutoFullscreen();
+  }
+});
+
+window.addEventListener("mouseup", (event) => {
+  if (event.button !== 0) return;
   pointer.down = false;
 });
 
 window.addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
+  const code = event.code;
 
   if (listeningAction) {
     event.preventDefault();
@@ -1627,9 +1654,9 @@ window.addEventListener("keydown", (event) => {
     return;
   }
 
-  if (["&", "é", "\"", "'"].includes(key)) {
+  if (["Digit1", "Digit2", "Digit3", "Digit4"].includes(code)) {
     const order = ["rifle", "shotgun", "sniper", "burst"];
-    settings.weapon = order[["&", "é", "\"", "'"].indexOf(key)];
+    settings.weapon = order[["Digit1", "Digit2", "Digit3", "Digit4"].indexOf(code)];
     saveSettings();
     renderUI();
   }
@@ -1667,6 +1694,15 @@ ui.startButton.addEventListener("click", () => {
 
 ui.tabButtons.forEach((button) => {
   button.addEventListener("click", () => switchTab(button.dataset.tab));
+});
+
+ui.interfaceChoices.forEach((button) => {
+  button.addEventListener("click", () => {
+    settings.interfaceMode = button.dataset.interface;
+    saveSettings();
+    syncMobileMode();
+    renderUI();
+  });
 });
 
 ui.modeChoices.forEach((button) => {
@@ -1754,6 +1790,7 @@ ui.restartDelay.addEventListener("input", () => {
 ui.mobileFireButton.addEventListener("pointerdown", (event) => {
   event.preventDefault();
   ensureAudio();
+  tryAutoFullscreen();
   mobile.firing = true;
   if (overlayOpen) startMatch();
 });
@@ -1765,6 +1802,7 @@ window.addEventListener("pointerup", () => {
 ui.mobileDashButton.addEventListener("pointerdown", (event) => {
   event.preventDefault();
   ensureAudio();
+  tryAutoFullscreen();
   if (overlayOpen) {
     startMatch();
     return;
@@ -1792,6 +1830,7 @@ ui.joystickShell.addEventListener("touchstart", (event) => {
   mobile.moveTouchId = touch.identifier;
   updateJoystickFromTouch(touch);
   ensureAudio();
+  tryAutoFullscreen();
 }, { passive: true });
 
 ui.joystickShell.addEventListener("touchmove", (event) => {
@@ -1819,6 +1858,7 @@ ui.aimPad.addEventListener("touchstart", (event) => {
   mobile.aimTouchId = touch.identifier;
   updateAimFromTouch(touch);
   ensureAudio();
+  tryAutoFullscreen();
   if (overlayOpen) startMatch();
 }, { passive: true });
 
