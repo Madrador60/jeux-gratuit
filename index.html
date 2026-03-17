@@ -30,6 +30,28 @@
     <main class="viewport">
       <canvas id="game"></canvas>
 
+      <div class="mobile-controls" id="mobileControls" aria-hidden="true">
+        <div class="mobile-left">
+          <div class="joystick-shell" id="joystickShell">
+            <div class="joystick-base"></div>
+            <div class="joystick-stick" id="joystickStick"></div>
+          </div>
+          <p class="mobile-label">Deplacement</p>
+        </div>
+
+        <div class="mobile-right">
+          <div class="aim-pad" id="aimPad">
+            <div class="aim-reticle"></div>
+          </div>
+          <div class="mobile-buttons">
+            <button class="mobile-button fire" id="mobileFireButton" type="button">Tir</button>
+            <button class="mobile-button dash" id="mobileDashButton" type="button">Dash</button>
+            <button class="mobile-button weapon" id="mobileWeaponButton" type="button">Arme</button>
+            <button class="mobile-button menu" id="mobileMenuButton" type="button">Menu</button>
+          </div>
+        </div>
+      </div>
+
       <aside class="hud hud-left">
         <h2>Controles</h2>
         <div class="control-line"><span>Avancer</span><kbd id="moveForwardKey">Z</kbd></div>
@@ -39,7 +61,7 @@
         <div class="control-line"><span>Dash</span><kbd id="dashKey">SHIFT</kbd></div>
         <div class="control-line"><span>Pause</span><kbd id="pauseKey">P</kbd></div>
         <div class="control-line"><span>Recommencer</span><kbd id="restartKey">R</kbd></div>
-        <div class="control-line"><span>Armes</span><kbd>1 2 3 4</kbd></div>
+        <div class="control-line"><span>Armes</span><kbd>&amp; É " '</kbd></div>
         <p class="hint">Souris pour viser, clic gauche pour tirer.</p>
       </aside>
 
@@ -109,7 +131,7 @@
               <button class="menu-choice" type="button" data-weapon="sniper">Sniper</button>
               <button class="menu-choice" type="button" data-weapon="burst">Rafale</button>
             </div>
-            <p class="hint">`1 2 3 4` changent aussi l'arme en jeu.</p>
+            <p class="hint">`&`, `é`, `"` et `'` changent aussi l'arme en jeu sur PC.</p>
           </div>
         </div>
 

@@ -17,6 +17,14 @@ const ui = {
   enemyTwoHp: document.getElementById("enemyTwoHp"),
   menuButton: document.getElementById("menuButton"),
   fullscreenButton: document.getElementById("fullscreenButton"),
+  mobileControls: document.getElementById("mobileControls"),
+  joystickShell: document.getElementById("joystickShell"),
+  joystickStick: document.getElementById("joystickStick"),
+  aimPad: document.getElementById("aimPad"),
+  mobileFireButton: document.getElementById("mobileFireButton"),
+  mobileDashButton: document.getElementById("mobileDashButton"),
+  mobileWeaponButton: document.getElementById("mobileWeaponButton"),
+  mobileMenuButton: document.getElementById("mobileMenuButton"),
   hubOverlay: document.getElementById("hubOverlay"),
   closeHubButton: document.getElementById("closeHubButton"),
   tabButtons: [...document.querySelectorAll(".tab-button")],
@@ -114,6 +122,17 @@ const obstacles = [
 
 const keys = new Set();
 const pointer = { x: 0, y: 0, down: false, active: false };
+const mobile = {
+  enabled: false,
+  moveTouchId: null,
+  moveX: 0,
+  moveY: 0,
+  aimTouchId: null,
+  aimX: 1,
+  aimY: 0,
+  aiming: false,
+  firing: false
+};
 const skinImages = {};
 Object.entries(skinCatalog).forEach(([id, entry]) => {
   if (entry.image) {
@@ -172,6 +191,7 @@ let cameraShake = 0;
 let appleTimer = 0;
 let levelToast = 0;
 let footTimer = 0;
+let coarseMedia = null;
 
 let player;
 let ally = null;
@@ -321,6 +341,33 @@ function labelForKey(key) {
 
 function isPressed(action) {
   return keys.has(bindingKey(action));
+}
+
+function mobileMoveAxis(axis) {
+  return axis === "x" ? mobile.moveX : mobile.moveY;
+}
+
+function isFiring() {
+  return pointer.down || mobile.firing;
+}
+
+function isMobileViewport() {
+  return mobile.enabled;
+}
+
+function syncMobileMode() {
+  const next = Boolean(coarseMedia?.matches || window.innerWidth <= 820);
+  mobile.enabled = next;
+  ui.mobileControls?.setAttribute("aria-hidden", String(!next));
+  if (!next) {
+    mobile.moveTouchId = null;
+    mobile.aimTouchId = null;
+    mobile.moveX = 0;
+    mobile.moveY = 0;
+    mobile.aiming = false;
+    mobile.firing = false;
+    ui.joystickStick.style.transform = "translate(-50%, -50%)";
+  }
 }
 
 function isSkinUnlocked(id) {
@@ -532,6 +579,7 @@ function resize() {
   canvas.width = Math.floor(rect.width * DPR);
   canvas.height = Math.floor(rect.height * DPR);
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  syncMobileMode();
 }
 
 function setBinding(action, key) {
@@ -546,6 +594,7 @@ function renderUI() {
   ui.bestLevel.textContent = String(bestLevel);
   ui.modeLabel.textContent = currentModeLabel();
   ui.weaponLabel.textContent = currentWeaponLabel();
+  ui.mobileWeaponButton.textContent = weaponConfigs[settings.weapon].label.replace("SHOTGUN", "POMPE");
   ui.fps.textContent = String(shownFps);
 
   if (player) {
@@ -879,8 +928,8 @@ function updateEntityCooldowns(entity, dt) {
 
 function updatePlayer(dt) {
   if (!player || player.hp <= 0) return;
-  const moveX = (isPressed("right") ? 1 : 0) - (isPressed("left") ? 1 : 0);
-  const moveY = (isPressed("backward") ? 1 : 0) - (isPressed("forward") ? 1 : 0);
+  const moveX = ((isPressed("right") ? 1 : 0) - (isPressed("left") ? 1 : 0)) + mobileMoveAxis("x");
+  const moveY = ((isPressed("backward") ? 1 : 0) - (isPressed("forward") ? 1 : 0)) + mobileMoveAxis("y");
   const move = normalize(moveX, moveY);
   const moving = moveX !== 0 || moveY !== 0;
   const accel = moving ? 1750 : 1150;
@@ -916,7 +965,7 @@ function updatePlayer(dt) {
   const worldPoint = screenToWorld(pointer.x, pointer.y);
   player.angle = Math.atan2(worldPoint.y - player.y, worldPoint.x - player.x);
 
-  if (pointer.down) {
+  if (isFiring()) {
     fireWeapon(player, worldPoint.x, worldPoint.y);
   }
 }
@@ -1036,6 +1085,7 @@ function updateApples(dt) {
 
 function updateGame(dt) {
   if (!player) return;
+  if (mobile.enabled && mobile.aiming) updateVirtualPointerFromAim();
   updateEntityCooldowns(player, dt);
   if (ally) updateEntityCooldowns(ally, dt);
   enemies.forEach((enemy) => updateEntityCooldowns(enemy, dt));
@@ -1390,6 +1440,56 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+function updateVirtualPointerFromAim() {
+  if (!player) return;
+  const camera = getCamera();
+  const playerScreenX = player.x - camera.x;
+  const playerScreenY = player.y - camera.y;
+  const aim = normalize(mobile.aimX, mobile.aimY);
+  pointer.x = playerScreenX + aim.x * 180;
+  pointer.y = playerScreenY + aim.y * 180;
+  pointer.active = true;
+}
+
+function updateJoystickFromTouch(touch) {
+  const rect = ui.joystickShell.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const dx = touch.clientX - centerX;
+  const dy = touch.clientY - centerY;
+  const maxDistance = rect.width * 0.26;
+  const dist = Math.min(maxDistance, Math.hypot(dx, dy));
+  const dir = normalize(dx, dy);
+  mobile.moveX = dir.x * (dist / maxDistance);
+  mobile.moveY = dir.y * (dist / maxDistance);
+  ui.joystickStick.style.transform = `translate(calc(-50% + ${mobile.moveX * maxDistance}px), calc(-50% + ${mobile.moveY * maxDistance}px))`;
+}
+
+function resetJoystick() {
+  mobile.moveX = 0;
+  mobile.moveY = 0;
+  ui.joystickStick.style.transform = "translate(-50%, -50%)";
+}
+
+function updateAimFromTouch(touch) {
+  const rect = ui.aimPad.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  mobile.aimX = touch.clientX - centerX;
+  mobile.aimY = touch.clientY - centerY;
+  mobile.aiming = true;
+  mobile.firing = true;
+  updateVirtualPointerFromAim();
+}
+
+function cycleWeapon() {
+  const order = ["rifle", "shotgun", "sniper", "burst"];
+  const index = order.indexOf(settings.weapon);
+  settings.weapon = order[(index + 1) % order.length];
+  saveSettings();
+  renderUI();
+}
+
 function render() {
   const view = viewSize();
   ctx.clearRect(0, 0, view.width, view.height);
@@ -1527,9 +1627,9 @@ window.addEventListener("keydown", (event) => {
     return;
   }
 
-  if (["1", "2", "3", "4"].includes(key)) {
+  if (["&", "é", "\"", "'"].includes(key)) {
     const order = ["rifle", "shotgun", "sniper", "burst"];
-    settings.weapon = order[Number(key) - 1];
+    settings.weapon = order[["&", "é", "\"", "'"].indexOf(key)];
     saveSettings();
     renderUI();
   }
@@ -1651,12 +1751,107 @@ ui.restartDelay.addEventListener("input", () => {
   renderUI();
 });
 
+ui.mobileFireButton.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  ensureAudio();
+  mobile.firing = true;
+  if (overlayOpen) startMatch();
+});
+
+window.addEventListener("pointerup", () => {
+  mobile.firing = false;
+});
+
+ui.mobileDashButton.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  ensureAudio();
+  if (overlayOpen) {
+    startMatch();
+    return;
+  }
+  const moveX = mobile.moveX || Math.cos(player.angle);
+  const moveY = mobile.moveY || Math.sin(player.angle);
+  const dir = normalize(moveX, moveY);
+  dash(player, dir.x, dir.y);
+});
+
+ui.mobileWeaponButton.addEventListener("click", (event) => {
+  event.preventDefault();
+  cycleWeapon();
+});
+
+ui.mobileMenuButton.addEventListener("click", (event) => {
+  event.preventDefault();
+  if (overlayOpen) closeOverlay();
+  else openOverlay("play");
+});
+
+ui.joystickShell.addEventListener("touchstart", (event) => {
+  if (!mobile.enabled) return;
+  const touch = event.changedTouches[0];
+  mobile.moveTouchId = touch.identifier;
+  updateJoystickFromTouch(touch);
+  ensureAudio();
+}, { passive: true });
+
+ui.joystickShell.addEventListener("touchmove", (event) => {
+  const touch = [...event.changedTouches].find((item) => item.identifier === mobile.moveTouchId);
+  if (!touch) return;
+  event.preventDefault();
+  updateJoystickFromTouch(touch);
+}, { passive: false });
+
+ui.joystickShell.addEventListener("touchend", (event) => {
+  const touch = [...event.changedTouches].find((item) => item.identifier === mobile.moveTouchId);
+  if (!touch) return;
+  mobile.moveTouchId = null;
+  resetJoystick();
+}, { passive: true });
+
+ui.joystickShell.addEventListener("touchcancel", () => {
+  mobile.moveTouchId = null;
+  resetJoystick();
+}, { passive: true });
+
+ui.aimPad.addEventListener("touchstart", (event) => {
+  if (!mobile.enabled) return;
+  const touch = event.changedTouches[0];
+  mobile.aimTouchId = touch.identifier;
+  updateAimFromTouch(touch);
+  ensureAudio();
+  if (overlayOpen) startMatch();
+}, { passive: true });
+
+ui.aimPad.addEventListener("touchmove", (event) => {
+  const touch = [...event.changedTouches].find((item) => item.identifier === mobile.aimTouchId);
+  if (!touch) return;
+  event.preventDefault();
+  updateAimFromTouch(touch);
+}, { passive: false });
+
+ui.aimPad.addEventListener("touchend", (event) => {
+  const touch = [...event.changedTouches].find((item) => item.identifier === mobile.aimTouchId);
+  if (!touch) return;
+  mobile.aimTouchId = null;
+  mobile.aiming = false;
+  mobile.firing = false;
+}, { passive: true });
+
+ui.aimPad.addEventListener("touchcancel", () => {
+  mobile.aimTouchId = null;
+  mobile.aiming = false;
+  mobile.firing = false;
+}, { passive: true });
+
 document.querySelectorAll(".bind-button").forEach((button) => {
   button.addEventListener("click", () => {
     listeningAction = button.dataset.action;
     renderUI();
   });
 });
+
+coarseMedia = window.matchMedia("(pointer: coarse)");
+coarseMedia.addEventListener?.("change", syncMobileMode);
 
 resetLevel(1, true);
 gameStarted = false;
