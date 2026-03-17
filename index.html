@@ -16,6 +16,10 @@
     <div class="rotate-card">
       <strong>Tourne le telephone</strong>
       <span>La version mobile est pensee pour jouer en horizontal.</span>
+      <div class="rotate-actions">
+        <button class="chip-button" id="rotateFullscreenButton" type="button">Plein ecran</button>
+        <button class="chip-button" id="rotateDismissButton" type="button">Fermer</button>
+      </div>
     </div>
   </div>
   <div class="app-shell">
@@ -29,6 +33,8 @@
         <div class="pill"><span>Record</span><strong id="bestLevel">1</strong></div>
         <div class="pill"><span>Mode</span><strong id="modeLabel">NIVEAUX</strong></div>
         <div class="pill"><span>Arme</span><strong id="weaponLabel">RIFLE</strong></div>
+        <div class="pill"><span>Pieces</span><strong id="coinsLabel">0</strong></div>
+        <div class="pill"><span>Puissance</span><strong id="powerLabel">1</strong></div>
         <div class="pill"><span>FPS</span><strong id="fps">0</strong></div>
         <button class="chip-button" id="menuButton" type="button">Menu</button>
         <button class="chip-button" id="fullscreenButton" type="button">Plein ecran</button>
@@ -136,8 +142,10 @@
               <button class="menu-choice active" type="button" data-mode="levels">Niveaux</button>
               <button class="menu-choice" type="button" data-mode="duo">2v2 assist</button>
               <button class="menu-choice" type="button" data-mode="chaos">Chaos</button>
+              <button class="menu-choice" type="button" data-mode="swarm">Swarm</button>
+              <button class="menu-choice" type="button" data-mode="bossrush">Boss rush</button>
             </div>
-            <p class="hint">`Niveaux` progresse a l'infini. `2v2` ajoute un allie. `Chaos` envoie plus d'ennemis.</p>
+            <p class="hint">`Niveaux` progresse a l'infini. `2v2` ajoute un allie. `Chaos`, `Swarm` et `Boss rush` mettent beaucoup plus de pression.</p>
           </div>
 
           <div class="menu-card">

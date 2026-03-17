@@ -6,6 +6,8 @@ const ui = {
   bestLevel: document.getElementById("bestLevel"),
   modeLabel: document.getElementById("modeLabel"),
   weaponLabel: document.getElementById("weaponLabel"),
+  coinsLabel: document.getElementById("coinsLabel"),
+  powerLabel: document.getElementById("powerLabel"),
   fps: document.getElementById("fps"),
   status: document.getElementById("statusText"),
   playerHp: document.getElementById("playerHp"),
@@ -26,6 +28,8 @@ const ui = {
   mobileWeaponButton: document.getElementById("mobileWeaponButton"),
   mobileMenuButton: document.getElementById("mobileMenuButton"),
   rotateNotice: document.getElementById("rotateNotice"),
+  rotateFullscreenButton: document.getElementById("rotateFullscreenButton"),
+  rotateDismissButton: document.getElementById("rotateDismissButton"),
   hubOverlay: document.getElementById("hubOverlay"),
   closeHubButton: document.getElementById("closeHubButton"),
   tabButtons: [...document.querySelectorAll(".tab-button")],
@@ -88,6 +92,7 @@ const ui = {
 const STORAGE_SETTINGS = "arena_fun_settings_v1";
 const STORAGE_RECORD = "arena_fun_record_v1";
 const STORAGE_STATS = "arena_fun_stats_v1";
+const STORAGE_PROGRESS = "arena_fun_progress_v1";
 const DPR = Math.min(window.devicePixelRatio || 1, 2);
 const arena = { width: 2200, height: 1400 };
 
@@ -174,6 +179,7 @@ const defaultSettings = {
 let settings = loadSettings();
 let bestLevel = loadBestLevel();
 let lifetimeStats = loadStats();
+let progress = loadProgress();
 let listeningAction = null;
 let currentTab = "play";
 let audioContext = null;
@@ -195,6 +201,7 @@ let appleTimer = 0;
 let levelToast = 0;
 let footTimer = 0;
 let coarseMedia = null;
+let rotateNoticeDismissed = false;
 
 let player;
 let ally = null;
@@ -206,6 +213,8 @@ const world = {
   apples: [],
   level: 1,
   tier: "Facile",
+  theme: "neo",
+  bossLevel: false,
   session: {
     kills: 0,
     shots: 0,
@@ -265,6 +274,24 @@ function saveStats() {
   localStorage.setItem(STORAGE_STATS, JSON.stringify(lifetimeStats));
 }
 
+function loadProgress() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_PROGRESS) || "null");
+    return {
+      coins: Number(parsed?.coins) || 0,
+      attackTier: Number(parsed?.attackTier) || 0,
+      vitalityTier: Number(parsed?.vitalityTier) || 0,
+      dashTier: Number(parsed?.dashTier) || 0
+    };
+  } catch {
+    return { coins: 0, attackTier: 0, vitalityTier: 0, dashTier: 0 };
+  }
+}
+
+function saveProgress() {
+  localStorage.setItem(STORAGE_PROGRESS, JSON.stringify(progress));
+}
+
 function saveBestLevel(level) {
   bestLevel = Math.max(bestLevel, level);
   localStorage.setItem(STORAGE_RECORD, String(bestLevel));
@@ -274,7 +301,7 @@ function sanitizeSettings() {
   if (!["pc", "mobile"].includes(settings.interfaceMode)) settings.interfaceMode = "pc";
   if (!weaponConfigs[settings.weapon]) settings.weapon = "rifle";
   if (!skinCatalog[settings.skin]) settings.skin = "core";
-  if (!["levels", "duo", "chaos"].includes(settings.mode)) settings.mode = "levels";
+  if (!["levels", "duo", "chaos", "swarm", "bossrush"].includes(settings.mode)) settings.mode = "levels";
   if (!["arcade", "prout", "coincoin", "party"].includes(settings.soundPack)) settings.soundPack = "prout";
   settings.bulletSize = clamp(Number(settings.bulletSize) || defaultSettings.bulletSize, 4, 12);
   settings.bulletDamage = clamp(Number(settings.bulletDamage) || defaultSettings.bulletDamage, 6, 25);
@@ -304,13 +331,23 @@ function createEntity(x, y, options = {}) {
     color: options.color || "#7cf6b8",
     skin: options.skin || "core",
     team: options.team || "ally",
-    ai: options.ai || false
+    ai: options.ai || false,
+    archetype: options.archetype || "player",
+    preferredWeapon: options.preferredWeapon || "rifle",
+    reward: options.reward || 0,
+    desiredRange: options.desiredRange || 320,
+    speedMul: options.speedMul || 1,
+    dashChance: options.dashChance || 0.012,
+    damageValue: options.damageValue || 8,
+    reloadValue: options.reloadValue || weaponConfigs.rifle.reload
   };
 }
 
 function currentModeLabel() {
   if (settings.mode === "duo") return "2V2 ASSIST";
   if (settings.mode === "chaos") return "CHAOS";
+  if (settings.mode === "swarm") return "SWARM";
+  if (settings.mode === "bossrush") return "BOSS RUSH";
   return "NIVEAUX";
 }
 
@@ -323,6 +360,10 @@ function currentMoodLabel() {
   if (settings.soundPack === "coincoin") return "Coin coin tactique";
   if (settings.soundPack === "party") return "Fete cosmique";
   return "Arcade propre";
+}
+
+function playerPowerLabel() {
+  return 1 + progress.attackTier + progress.vitalityTier + progress.dashTier;
 }
 
 function skinFlavor(id) {
@@ -341,6 +382,63 @@ function skinFlavor(id) {
     alien: "Visiteur bizarre"
   };
   return flavors[id] || "Skin legendaire";
+}
+
+function enemyBlueprint(kind, level, diff) {
+  const blueprints = {
+    grunt: { hp: diff.enemyHp, speed: diff.enemySpeed, weapon: level > 8 ? "burst" : "rifle", skin: "core", color: "#ff7088", reward: 10, radius: 30, range: 340, dashChance: 0.012, damage: diff.enemyDamage, reload: diff.enemyReload },
+    runner: { hp: Math.round(diff.enemyHp * 0.78), speed: diff.enemySpeed * 1.25, weapon: "burst", skin: "fox", color: "#ff9d66", reward: 12, radius: 28, range: 250, dashChance: 0.028, damage: Math.max(7, diff.enemyDamage - 2), reload: Math.max(0.1, diff.enemyReload * 0.78) },
+    tank: { hp: Math.round(diff.enemyHp * 1.7), speed: diff.enemySpeed * 0.8, weapon: "shotgun", skin: "tank", color: "#ff8d77", reward: 18, radius: 38, range: 210, dashChance: 0.008, damage: diff.enemyDamage + 3, reload: diff.enemyReload * 1.3 },
+    sniper: { hp: Math.round(diff.enemyHp * 0.92), speed: diff.enemySpeed * 0.9, weapon: "sniper", skin: "shadow", color: "#ff6ca8", reward: 16, radius: 28, range: 560, dashChance: 0.006, damage: diff.enemyDamage + 6, reload: Math.max(0.18, diff.enemyReload * 1.4) },
+    boss: { hp: Math.round(diff.enemyHp * 3.2), speed: diff.enemySpeed * 0.86, weapon: "burst", skin: "poop", color: "#ffbd59", reward: 42, radius: 50, range: 420, dashChance: 0.012, damage: diff.enemyDamage + 2, reload: Math.max(0.18, diff.enemyReload * 0.95) }
+  };
+  return blueprints[kind] || blueprints.grunt;
+}
+
+function chooseEnemyKinds(level, mode) {
+  if (mode === "bossrush") return ["boss", "sniper"];
+  if (mode === "swarm") return level > 8 ? ["runner", "runner"] : ["grunt", "runner"];
+  if (level % 5 === 0) return mode === "chaos" ? ["boss", "runner"] : ["boss"];
+  if (mode === "chaos") return level > 8 ? ["runner", "tank"] : ["grunt", "runner"];
+  if (mode === "duo") return level > 6 ? ["tank", "sniper"] : ["grunt", "runner"];
+  if (level > 9) return ["sniper"];
+  if (level > 5) return ["tank"];
+  return ["grunt"];
+}
+
+function createEnemy(kind, x, y, level, diff) {
+  const spec = enemyBlueprint(kind, level, diff);
+  return createEntity(x, y, {
+    color: spec.color,
+    skin: spec.skin,
+    team: "enemy",
+    ai: true,
+    hp: spec.hp,
+    radius: spec.radius,
+    archetype: kind,
+    preferredWeapon: spec.weapon,
+    reward: spec.reward,
+    desiredRange: spec.range,
+    speedMul: spec.speed / diff.enemySpeed,
+    dashChance: spec.dashChance,
+    damageValue: spec.damage,
+    reloadValue: spec.reload
+  });
+}
+
+function autoSpendCoins() {
+  const costs = { attackTier: 25, vitalityTier: 30, dashTier: 35 };
+  const cycle = ["attackTier", "vitalityTier", "dashTier"];
+  let bought = false;
+  cycle.forEach((key) => {
+    if (progress[key] >= 4) return;
+    if (progress.coins >= costs[key]) {
+      progress.coins -= costs[key];
+      progress[key] += 1;
+      bought = true;
+    }
+  });
+  if (bought) saveProgress();
 }
 
 function bindingKey(action) {
@@ -372,9 +470,10 @@ function syncMobileMode() {
   mobile.enabled = next;
   ui.mobileControls?.setAttribute("aria-hidden", String(!next));
   document.body.classList.toggle("mobile-ui-active", next);
-  document.body.classList.toggle("mobile-portrait", next && window.innerHeight > window.innerWidth);
+  const showRotateNotice = next && window.innerHeight > window.innerWidth && !rotateNoticeDismissed;
+  document.body.classList.toggle("mobile-portrait", showRotateNotice);
   if (ui.rotateNotice) {
-    ui.rotateNotice.setAttribute("aria-hidden", String(!(next && window.innerHeight > window.innerWidth)));
+    ui.rotateNotice.setAttribute("aria-hidden", String(!showRotateNotice));
   }
   if (!next) {
     mobile.moveTouchId = null;
@@ -496,9 +595,13 @@ function resetLevel(level, freshRun = false) {
   const diff = getDifficulty(level);
   const enemySpawn = randomSpawn("enemy");
   const enemySpawnTwo = randomSpawn("enemy");
+  const enemySpawnThree = randomSpawn("enemy");
   const allySpawn = randomSpawn("ally");
+  const enemyKinds = chooseEnemyKinds(level, settings.mode);
   world.level = level;
   world.tier = diff.tier;
+  world.theme = level % 3 === 0 ? "ember" : level % 3 === 1 ? "neo" : "toxic";
+  world.bossLevel = level % 5 === 0;
   gameOver = false;
   restartTimer = 0;
   appleTimer = 2.5;
@@ -523,27 +626,32 @@ function resetLevel(level, freshRun = false) {
     player.color = settings.playerColor;
     player.skin = settings.skin;
   }
+  player.maxHp = 100 + progress.vitalityTier * 20;
+  player.hp = Math.min(player.maxHp, Math.max(player.hp, player.maxHp * 0.7));
+  player.maxEnergy = 100 + progress.dashTier * 8;
+  player.energy = Math.min(player.maxEnergy, player.energy);
 
   ally = null;
   enemies = [];
 
-  enemies.push(createEntity(enemySpawn.x, enemySpawn.y, {
-    color: "#ff7088",
-    skin: level % 3 === 0 ? "shadow" : level % 3 === 1 ? "core" : "tank",
-    team: "enemy",
-    ai: true,
-    hp: diff.enemyHp
-  }));
+  enemies.push(createEnemy(enemyKinds[0], enemySpawn.x, enemySpawn.y, level, diff));
 
   if (settings.mode === "duo") {
     ally = createEntity(allySpawn.x, allySpawn.y, { color: "#76d8ff", skin: "nova", team: "ally", ai: true, hp: 100 });
-    enemies.push(createEntity(enemySpawnTwo.x, enemySpawnTwo.y, { color: "#ff9b68", skin: "fox", team: "enemy", ai: true, hp: Math.round(diff.enemyHp * 0.88) }));
-  } else if (settings.mode === "chaos") {
-    enemies.push(createEntity(enemySpawnTwo.x, enemySpawnTwo.y, { color: "#ff9b68", skin: "frog", team: "enemy", ai: true, hp: Math.round(diff.enemyHp * 0.78) }));
+    ally.preferredWeapon = "rifle";
+    if (enemyKinds[1]) enemies.push(createEnemy(enemyKinds[1], enemySpawnTwo.x, enemySpawnTwo.y, level, diff));
+  } else if (settings.mode === "chaos" || settings.mode === "swarm" || settings.mode === "bossrush") {
+    if (enemyKinds[1]) enemies.push(createEnemy(enemyKinds[1], enemySpawnTwo.x, enemySpawnTwo.y, level, diff));
+    if (settings.mode === "swarm") {
+      enemies.push(createEnemy(level > 10 ? "tank" : "grunt", enemySpawnThree.x, enemySpawnThree.y, level, diff));
+    }
   }
 
+  autoSpendCoins();
   saveBestLevel(level);
-  ui.status.textContent = `Niveau ${world.level} - ${world.tier} - ${currentModeLabel()}.`;
+  ui.status.textContent = world.bossLevel
+    ? `Boss du niveau ${world.level} - attention.`
+    : `Niveau ${world.level} - ${world.tier} - ${currentModeLabel()}.`;
   renderUI();
 }
 
@@ -609,6 +717,8 @@ function renderUI() {
   ui.bestLevel.textContent = String(bestLevel);
   ui.modeLabel.textContent = currentModeLabel();
   ui.weaponLabel.textContent = currentWeaponLabel();
+  ui.coinsLabel.textContent = String(progress.coins);
+  ui.powerLabel.textContent = String(playerPowerLabel());
   ui.mobileWeaponButton.textContent = weaponConfigs[settings.weapon].label.replace("SHOTGUN", "POMPE");
   ui.fps.textContent = String(shownFps);
 
@@ -735,7 +845,7 @@ function tone({ frequency, slideTo = null, duration = 0.12, volume = 0.1, type =
   osc.type = type;
   osc.frequency.setValueAtTime(frequency, now);
   if (slideTo) osc.frequency.exponentialRampToValueAtTime(Math.max(1, slideTo), now + duration);
-  const actualVolume = Math.min(1, volume * (settings.masterVolume / 100));
+  const actualVolume = Math.min(1, volume * (settings.masterVolume / 100) * 1.18);
   gain.gain.setValueAtTime(0.0001, now);
   gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, actualVolume), now + 0.01);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
@@ -879,7 +989,7 @@ function fireWeapon(entity, targetX, targetY, options = {}) {
       vx: Math.cos(angle) * config.speed,
       vy: Math.sin(angle) * config.speed,
       radius: (options.radius || settings.bulletSize) * (config.pellets > 1 ? 0.9 : 1),
-      damage: (options.damage || settings.bulletDamage) * config.damageMul,
+      damage: (options.damage || (settings.bulletDamage + progress.attackTier * 2.5)) * config.damageMul,
       color: options.color || (entity.team === "ally" ? settings.bulletColor : "#ff7f98"),
       life: config.pellets > 1 ? 0.6 : 0.95,
       team: entity.team
@@ -901,10 +1011,10 @@ function fireWeapon(entity, targetX, targetY, options = {}) {
 function dash(entity, dirX, dirY) {
   if (entity.dashCooldown > 0 || entity.energy < 18 || entity.hp <= 0) return;
   const dir = normalize(dirX, dirY);
-  const power = entity === player ? 2850 : 1180;
+  const power = entity === player ? 2850 + progress.dashTier * 260 : 1180;
   entity.vx += dir.x * power;
   entity.vy += dir.y * power;
-  entity.energy = clamp(entity.energy - 18, 0, entity.maxEnergy);
+  entity.energy = clamp(entity.energy - (entity === player ? Math.max(8, 18 - progress.dashTier * 2) : 18), 0, entity.maxEnergy);
   entity.dashCooldown = entity === player ? 0.22 : 1;
   spawnBurst(entity.x, entity.y, entity.color, 14, 260);
   if (entity === player) {
@@ -930,7 +1040,9 @@ function damageEntity(entity, amount, fromColor) {
     if (entity.team === "enemy") {
       world.session.kills += 1;
       lifetimeStats.kills += 1;
+      progress.coins += entity.reward || (world.bossLevel ? 18 : 10);
       saveStats();
+      saveProgress();
     }
   }
 }
@@ -998,9 +1110,9 @@ function updateBot(entity, dt) {
   const dist = length(dx, dy);
   const dir = normalize(dx, dy);
   const orbit = entity.team === "enemy" ? 1 : -1;
-  const desiredRange = entity.team === "enemy" ? 340 : 300;
+  const desiredRange = entity.team === "enemy" ? entity.desiredRange : 300;
   const strafe = dist > desiredRange ? 0.26 : 0.92;
-  const speed = entity.team === "enemy" ? getDifficulty(world.level).enemySpeed : 300;
+  const speed = entity.team === "enemy" ? getDifficulty(world.level).enemySpeed * entity.speedMul : 300;
 
   entity.vx += (dir.x + -dir.y * strafe * orbit) * speed * dt * 1.2;
   entity.vy += (dir.y + dir.x * strafe * orbit) * speed * dt * 1.2;
@@ -1022,18 +1134,18 @@ function updateBot(entity, dt) {
   entity.angle = Math.atan2(dy, dx);
 
   if (canSee(entity, target) && dist < 760) {
-    const weapon = entity.team === "enemy" ? (world.level > 8 ? "burst" : "rifle") : "rifle";
+    const weapon = entity.team === "enemy" ? entity.preferredWeapon : "rifle";
     const diff = getDifficulty(world.level);
     fireWeapon(entity, target.x, target.y, {
       weapon,
       color: entity.team === "enemy" ? "#ff7f98" : "#7ae1ff",
-      radius: entity.team === "enemy" ? 5.5 : 5,
-      damage: entity.team === "enemy" ? diff.enemyDamage : 8,
-      reload: entity.team === "enemy" ? diff.enemyReload : weaponConfigs.rifle.reload
+      radius: entity.team === "enemy" ? (entity.archetype === "boss" ? 7 : 5.5) : 5,
+      damage: entity.team === "enemy" ? entity.damageValue || diff.enemyDamage : 8,
+      reload: entity.team === "enemy" ? entity.reloadValue || diff.enemyReload : weaponConfigs.rifle.reload
     });
   }
 
-  if (dist < 170 && entity.dashCooldown <= 0 && Math.random() < 0.012) {
+  if (dist < 170 && entity.dashCooldown <= 0 && Math.random() < entity.dashChance) {
     dash(entity, dir.x, dir.y);
   }
 }
@@ -1161,15 +1273,27 @@ function roundRect(x, y, w, h, radius) {
 function drawBackground(camera) {
   const view = viewSize();
   const gradient = ctx.createLinearGradient(0, 0, 0, view.height);
-  gradient.addColorStop(0, "#0f2430");
-  gradient.addColorStop(1, "#081119");
+  if (world.theme === "ember") {
+    gradient.addColorStop(0, "#2c1610");
+    gradient.addColorStop(1, "#110a08");
+  } else if (world.theme === "toxic") {
+    gradient.addColorStop(0, "#0b2a1d");
+    gradient.addColorStop(1, "#08150f");
+  } else {
+    gradient.addColorStop(0, "#0f2430");
+    gradient.addColorStop(1, "#081119");
+  }
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, view.width, view.height);
 
   ctx.save();
   ctx.translate(-camera.x, -camera.y);
 
-  ctx.strokeStyle = "rgba(255,255,255,0.04)";
+  ctx.strokeStyle = world.theme === "ember"
+    ? "rgba(255,167,120,0.05)"
+    : world.theme === "toxic"
+      ? "rgba(145,255,135,0.05)"
+      : "rgba(255,255,255,0.04)";
   ctx.lineWidth = 1;
   for (let x = 0; x <= arena.width; x += 120) {
     ctx.beginPath();
@@ -1201,7 +1325,11 @@ function drawBackground(camera) {
     ctx.fillStyle = blockGradient;
     roundRect(rect.x, rect.y, rect.w, rect.h, 24);
     ctx.fill();
-    ctx.strokeStyle = "rgba(84,240,255,0.16)";
+    ctx.strokeStyle = world.theme === "ember"
+      ? "rgba(255,164,84,0.18)"
+      : world.theme === "toxic"
+        ? "rgba(145,255,135,0.18)"
+        : "rgba(84,240,255,0.16)";
     ctx.lineWidth = 2;
     ctx.stroke();
   });
@@ -1526,7 +1654,11 @@ function render() {
 }
 
 function requestFullscreenSafe() {
-  document.documentElement.requestFullscreen?.().catch(() => {});
+  document.documentElement.requestFullscreen?.().then(() => {
+    if (mobile.enabled) {
+      screen.orientation?.lock?.("landscape").catch(() => {});
+    }
+  }).catch(() => {});
 }
 
 function tryAutoFullscreen() {
@@ -1827,6 +1959,17 @@ ui.mobileMenuButton.addEventListener("click", (event) => {
   event.preventDefault();
   if (overlayOpen) closeOverlay();
   else openOverlay("play");
+});
+
+ui.rotateFullscreenButton?.addEventListener("click", () => {
+  rotateNoticeDismissed = true;
+  requestFullscreenSafe();
+  syncMobileMode();
+});
+
+ui.rotateDismissButton?.addEventListener("click", () => {
+  rotateNoticeDismissed = true;
+  syncMobileMode();
 });
 
 ui.joystickShell.addEventListener("touchstart", (event) => {
