@@ -2,8 +2,10 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Arena 1v1">
   <meta name="mobile-web-app-capable" content="yes">
   <title>Arena 1v1 Infinite Deluxe</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,6 +37,7 @@
         <div class="pill"><span>Arme</span><strong id="weaponLabel">RIFLE</strong></div>
         <div class="pill"><span>Pieces</span><strong id="coinsLabel">0</strong></div>
         <div class="pill"><span>Puissance</span><strong id="powerLabel">1</strong></div>
+        <div class="pill"><span>Bouclier</span><strong id="shieldLabel">0.0s</strong></div>
         <div class="pill"><span>FPS</span><strong id="fps">0</strong></div>
         <button class="chip-button" id="menuButton" type="button">Menu</button>
         <button class="chip-button" id="fullscreenButton" type="button">Plein ecran</button>
@@ -45,6 +48,14 @@
       <canvas id="game"></canvas>
 
       <div class="mobile-controls" id="mobileControls" aria-hidden="true">
+        <div class="mobile-top-strip">
+          <div class="mobile-badge"><span>Niv</span><strong id="mobileLevelLabel">1</strong></div>
+          <div class="mobile-badge"><span>Mode</span><strong id="mobileModeLabel">NIVEAUX</strong></div>
+          <div class="mobile-badge"><span>Arme</span><strong id="mobileWeaponLabel">RIFLE</strong></div>
+          <div class="mobile-badge"><span>Pieces</span><strong id="mobileCoinsLabel">0</strong></div>
+          <button class="mobile-float-button" id="mobileFullscreenButton" type="button">Plein ecran</button>
+        </div>
+
         <div class="mobile-left">
           <div class="joystick-shell" id="joystickShell">
             <div class="joystick-base"></div>
@@ -102,6 +113,7 @@
         </div>
         <p class="status" id="statusText">Appuyez sur Jouer pour lancer la partie.</p>
       </aside>
+
     </main>
   </div>
 
@@ -119,6 +131,7 @@
 
       <nav class="hub-tabs">
         <button class="tab-button active" type="button" data-tab="play">Jouer</button>
+        <button class="tab-button" type="button" data-tab="shop">Boutique</button>
         <button class="tab-button" type="button" data-tab="skins">Skins</button>
         <button class="tab-button" type="button" data-tab="records">Records</button>
         <button class="tab-button" type="button" data-tab="audio">Audio</button>
@@ -161,24 +174,23 @@
         </div>
 
         <div class="menu-card">
-          <h3>Projectiles</h3>
-          <div class="settings-grid compact">
+          <h3>Style de tir</h3>
+          <div class="settings-grid">
             <label class="setting">
-              <span>Taille des balles</span>
-              <input id="bulletSize" type="range" min="4" max="12" step="1">
-              <strong id="bulletSizeValue">6</strong>
-            </label>
-
-            <label class="setting">
-              <span>Couleur des balles</span>
-              <input id="bulletColor" type="color" value="#63ebff">
-              <strong id="bulletColorValue">#63EBFF</strong>
-            </label>
-
-            <label class="setting">
-              <span>Degats</span>
-              <input id="bulletDamage" type="range" min="6" max="25" step="1">
-              <strong id="bulletDamageValue">11</strong>
+              <span>Style visuel</span>
+              <select id="bulletStyle">
+                <option value="dot">Point</option>
+                <option value="streak">Trait</option>
+                <option value="plasma">Plasma</option>
+                <option value="spark">Etincelle</option>
+                <option value="ring">Anneau</option>
+                <option value="comet">Comete</option>
+                <option value="shard">Eclat</option>
+                <option value="bolt">Eclair</option>
+                <option value="pulse">Pulse</option>
+                <option value="nova">Nova</option>
+              </select>
+              <strong>Taille 3 · Degats 11</strong>
             </label>
 
             <div class="setting">
@@ -193,6 +205,35 @@
         <div class="play-footer">
           <p class="hint">Choisissez ce que vous voulez puis cliquez sur `Jouer`. Sur PC les armes changent avec `&`, `é`, `"` et `'`.</p>
           <button class="hero-button" id="startButton" type="button">Jouer Maintenant</button>
+        </div>
+      </section>
+
+      <section class="tab-panel" data-panel="shop">
+        <div class="menu-card">
+          <h3>Boutique d'ameliorations</h3>
+          <p class="hint">Achetez vos boosts avec vos pieces pour construire votre propre build.</p>
+          <div class="upgrade-grid">
+            <button class="upgrade-button" id="upgradeAttack" type="button">
+              <span>Degats</span>
+              <strong id="upgradeAttackLevel">Niveau 0</strong>
+              <small id="upgradeAttackCost">25 pieces</small>
+            </button>
+            <button class="upgrade-button" id="upgradeVitality" type="button">
+              <span>Vie</span>
+              <strong id="upgradeVitalityLevel">Niveau 0</strong>
+              <small id="upgradeVitalityCost">30 pieces</small>
+            </button>
+            <button class="upgrade-button" id="upgradeDash" type="button">
+              <span>Dash</span>
+              <strong id="upgradeDashLevel">Niveau 0</strong>
+              <small id="upgradeDashCost">35 pieces</small>
+            </button>
+            <button class="upgrade-button" id="upgradeFire" type="button">
+              <span>Cadence</span>
+              <strong id="upgradeFireLevel">Niveau 0</strong>
+              <small id="upgradeFireCost">40 pieces</small>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -246,8 +287,16 @@
             <strong id="recordDashes">0</strong>
           </div>
           <div class="setting stat-tile">
-            <span>Pack de son actif</span>
-            <strong id="recordSoundPack">PROUT</strong>
+            <span>Boss battus</span>
+            <strong id="recordBosses">0</strong>
+          </div>
+          <div class="setting stat-tile">
+            <span>Pieces gagnees</span>
+            <strong id="recordCoinsEarned">0</strong>
+          </div>
+          <div class="setting stat-tile">
+            <span>Temps joue</span>
+            <strong id="recordTimePlayed">0 min</strong>
           </div>
         </div>
 
@@ -258,6 +307,7 @@
             <p><span>Arme favorite du moment:</span> <strong id="recordCurrentWeapon">RIFLE</strong></p>
             <p><span>Mode choisi:</span> <strong id="recordCurrentMode">NIVEAUX</strong></p>
             <p><span>Ambiance:</span> <strong id="recordMood">Chaos propre</strong></p>
+            <p><span>Arme la plus jouee:</span> <strong id="recordFavoriteWeapon">RIFLE</strong></p>
           </div>
         </div>
       </section>
@@ -274,16 +324,6 @@
             <span>Volume dash</span>
             <input id="dashVolume" type="range" min="0" max="100" step="1">
             <strong id="dashVolumeValue">100%</strong>
-          </label>
-
-          <label class="setting">
-            <span>Pack de sons</span>
-            <select id="soundPack">
-              <option value="arcade">Arcade</option>
-              <option value="prout">Prout blaster</option>
-              <option value="coincoin">Coin coin</option>
-              <option value="party">Party bizarre</option>
-            </select>
           </label>
 
           <label class="setting">
@@ -327,6 +367,38 @@
             <button class="bind-button" type="button" data-action="restart">Restart: <strong id="bindRestart">R</strong></button>
           </div>
           <p class="hint" id="bindingHint">Cliquez sur une touche puis appuyez sur la nouvelle touche.</p>
+        </div>
+
+        <div class="menu-card mobile-settings-card" id="mobileSettingsCard">
+          <h3>Mobile</h3>
+          <div class="settings-grid">
+            <label class="setting toggle">
+              <span>Mode ultra clean</span>
+              <input id="mobileUltraClean" type="checkbox">
+            </label>
+
+            <label class="setting toggle">
+              <span>Tir auto mobile</span>
+              <input id="mobileAutoFire" type="checkbox">
+            </label>
+
+            <label class="setting toggle">
+              <span>Vibrations / haptics</span>
+              <input id="mobileHaptics" type="checkbox">
+            </label>
+
+            <label class="setting">
+              <span>Sensibilite de visee</span>
+              <input id="touchSensitivity" type="range" min="60" max="180" step="5">
+              <strong id="touchSensitivityValue">100%</strong>
+            </label>
+
+            <label class="setting">
+              <span>Taille des boutons</span>
+              <input id="mobileButtonScale" type="range" min="80" max="150" step="5">
+              <strong id="mobileButtonScaleValue">100%</strong>
+            </label>
+          </div>
         </div>
       </section>
     </div>
