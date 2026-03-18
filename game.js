@@ -1,5 +1,7 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+const minimapCanvas = document.getElementById("minimap");
+const minimapCtx = minimapCanvas.getContext("2d");
 
 const ui = {
   appShell: document.querySelector(".app-shell"),
@@ -621,7 +623,8 @@ function isMobileViewport() {
 }
 
 function syncMobileMode() {
-  const next = settings.interfaceMode === "mobile";
+  const canUseTouchUi = coarseMedia?.matches ?? window.matchMedia("(pointer: coarse)").matches;
+  const next = settings.interfaceMode === "mobile" && canUseTouchUi;
   mobile.enabled = next;
   ui.mobileControls?.setAttribute("aria-hidden", String(!next));
   document.body.classList.toggle("mobile-ui-active", next);
@@ -878,6 +881,10 @@ function resize(skipModeSync = false) {
   canvas.width = Math.floor(rect.width * DPR);
   canvas.height = Math.floor(rect.height * DPR);
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const minimapRect = minimapCanvas.getBoundingClientRect();
+  minimapCanvas.width = Math.floor(minimapRect.width * DPR);
+  minimapCanvas.height = Math.floor(minimapRect.height * DPR);
+  minimapCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
   if (!skipModeSync) {
     syncMobileMode();
   }
@@ -2318,6 +2325,80 @@ function updatePointerFromTouch(touch) {
   return screenToWorld(pointer.x, pointer.y);
 }
 
+function drawMinimap(camera) {
+  const rect = minimapCanvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+
+  minimapCtx.clearRect(0, 0, rect.width, rect.height);
+
+  const scaleX = rect.width / arena.width;
+  const scaleY = rect.height / arena.height;
+  const mapX = (x) => x * scaleX;
+  const mapY = (y) => y * scaleY;
+
+  const background = minimapCtx.createLinearGradient(0, 0, 0, rect.height);
+  background.addColorStop(0, "rgba(10, 28, 38, 0.94)");
+  background.addColorStop(1, "rgba(5, 14, 20, 0.98)");
+  minimapCtx.fillStyle = background;
+  minimapCtx.fillRect(0, 0, rect.width, rect.height);
+
+  minimapCtx.strokeStyle = "rgba(255,255,255,0.05)";
+  minimapCtx.lineWidth = 1;
+  for (let x = 1; x < 4; x += 1) {
+    const px = (rect.width / 4) * x;
+    minimapCtx.beginPath();
+    minimapCtx.moveTo(px, 0);
+    minimapCtx.lineTo(px, rect.height);
+    minimapCtx.stroke();
+  }
+  for (let y = 1; y < 4; y += 1) {
+    const py = (rect.height / 4) * y;
+    minimapCtx.beginPath();
+    minimapCtx.moveTo(0, py);
+    minimapCtx.lineTo(rect.width, py);
+    minimapCtx.stroke();
+  }
+
+  minimapCtx.fillStyle = "rgba(255,255,255,0.1)";
+  obstacles.forEach((obstacle) => {
+    minimapCtx.fillRect(mapX(obstacle.x), mapY(obstacle.y), obstacle.w * scaleX, obstacle.h * scaleY);
+  });
+
+  world.hazards.forEach((hazard) => {
+    minimapCtx.fillStyle = hazard.type === "toxic" ? "rgba(255, 104, 104, 0.16)" : "rgba(99, 235, 255, 0.16)";
+    minimapCtx.beginPath();
+    minimapCtx.arc(mapX(hazard.x), mapY(hazard.y), Math.max(3, hazard.radius * scaleX), 0, Math.PI * 2);
+    minimapCtx.fill();
+  });
+
+  world.pickups.forEach((pickup) => {
+    minimapCtx.fillStyle = pickup.kind === "coin" ? "#ffd166" : pickup.kind === "shield" ? "#63ebff" : "#9cff88";
+    minimapCtx.beginPath();
+    minimapCtx.arc(mapX(pickup.x), mapY(pickup.y), pickup.kind === "coin" ? 2.5 : 3.5, 0, Math.PI * 2);
+    minimapCtx.fill();
+  });
+
+  const drawDot = (entity, color, radius = 4) => {
+    if (!entity || entity.hp <= 0) return;
+    minimapCtx.fillStyle = color;
+    minimapCtx.beginPath();
+    minimapCtx.arc(mapX(entity.x), mapY(entity.y), radius, 0, Math.PI * 2);
+    minimapCtx.fill();
+  };
+
+  enemies.forEach((enemy) => drawDot(enemy, enemy.archetype === "boss" ? "#ff8f6b" : "#ff5d76", enemy.archetype === "boss" ? 4.6 : 3.4));
+  drawDot(ally, "#63ebff", 3.4);
+  drawDot(player, settings.playerColor, 4.2);
+
+  minimapCtx.strokeStyle = "rgba(84, 240, 255, 0.62)";
+  minimapCtx.lineWidth = 1.2;
+  minimapCtx.strokeRect(mapX(camera.x), mapY(camera.y), camera.width * scaleX, camera.height * scaleY);
+
+  minimapCtx.strokeStyle = "rgba(255,255,255,0.14)";
+  minimapCtx.lineWidth = 1;
+  minimapCtx.strokeRect(0.5, 0.5, rect.width - 1, rect.height - 1);
+}
+
 function cycleWeapon() {
   const order = ["rifle", "shotgun", "sniper", "burst"];
   const index = order.indexOf(settings.weapon);
@@ -2345,6 +2426,7 @@ function render() {
   drawPause();
   drawVignette();
   drawCrosshair();
+  drawMinimap(camera);
 }
 
 function requestFullscreenSafe() {
