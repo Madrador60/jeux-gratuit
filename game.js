@@ -222,7 +222,8 @@ const mobile = {
   aimX: 1,
   aimY: 0,
   aiming: false,
-  firing: false
+  firing: false,
+  lastTapTime: 0
 };
 const skinImages = {};
 Object.entries(skinCatalog).forEach(([id, entry]) => {
@@ -493,6 +494,7 @@ function resetMobileInputs() {
   mobile.aimY = 0;
   mobile.aiming = false;
   mobile.firing = false;
+  mobile.lastTapTime = 0;
   ui.joystickStick.style.transform = "translate(-50%, -50%)";
   ui.aimStick.style.transform = "translate(-50%, -50%)";
 }
@@ -653,6 +655,7 @@ function syncMobileMode() {
   } else {
     screen.orientation?.lock?.("landscape").catch(() => {});
   }
+  requestAnimationFrame(() => resize(true));
 }
 
 function isSkinUnlocked(id) {
@@ -887,12 +890,14 @@ function switchTab(tab) {
   playTabSound();
 }
 
-function resize() {
+function resize(skipModeSync = false) {
   const rect = canvas.getBoundingClientRect();
   canvas.width = Math.floor(rect.width * DPR);
   canvas.height = Math.floor(rect.height * DPR);
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  syncMobileMode();
+  if (!skipModeSync) {
+    syncMobileMode();
+  }
 }
 
 function setBinding(action, key) {
@@ -2337,6 +2342,28 @@ function resetJoystick() {
   ui.joystickStick.style.transform = "translate(-50%, -50%)";
 }
 
+function updateDirectMoveFromTouch(touch) {
+  if (!player) return;
+  const rect = canvas.getBoundingClientRect();
+  const camera = getCamera();
+  const touchX = touch.clientX - rect.left;
+  const touchY = touch.clientY - rect.top;
+  const playerScreenX = player.x - camera.x;
+  const playerScreenY = player.y - camera.y;
+  const dx = touchX - playerScreenX;
+  const dy = touchY - playerScreenY;
+  const distance = Math.hypot(dx, dy);
+  const deadZone = 26;
+  if (distance <= deadZone) {
+    mobile.moveX = 0;
+    mobile.moveY = 0;
+    return;
+  }
+  const dir = normalize(dx, dy);
+  mobile.moveX = dir.x;
+  mobile.moveY = dir.y;
+}
+
 function updateAimFromTouch(touch) {
   const rect = ui.aimPad.getBoundingClientRect();
   const centerX = rect.left + rect.width / 2;
@@ -2806,6 +2833,46 @@ ui.joystickShell.addEventListener("touchstart", (event) => {
   updateJoystickFromTouch(touch);
   ensureAudio();
   tryAutoFullscreen();
+}, { passive: false });
+
+canvas.addEventListener("touchstart", (event) => {
+  if (!mobile.enabled || overlayOpen) return;
+  const touch = event.changedTouches[0];
+  const target = event.target;
+  if (ui.aimPad.contains(target) || ui.mobileDashButton.contains(target) || ui.mobileWeaponButton.contains(target) || ui.mobileMenuButton.contains(target)) {
+    return;
+  }
+  mobile.moveTouchId = touch.identifier;
+  updateDirectMoveFromTouch(touch);
+  const now = performance.now();
+  if (now - mobile.lastTapTime < 260 && player) {
+    const worldPoint = screenToWorld(touch.clientX - canvas.getBoundingClientRect().left, touch.clientY - canvas.getBoundingClientRect().top);
+    fireWeapon(player, worldPoint.x, worldPoint.y);
+    ensureAudio();
+  }
+  mobile.lastTapTime = now;
+}, { passive: true });
+
+canvas.addEventListener("touchmove", (event) => {
+  if (!mobile.enabled) return;
+  const touch = [...event.changedTouches].find((item) => item.identifier === mobile.moveTouchId);
+  if (!touch) return;
+  event.preventDefault();
+  updateDirectMoveFromTouch(touch);
+}, { passive: false });
+
+canvas.addEventListener("touchend", (event) => {
+  const touch = [...event.changedTouches].find((item) => item.identifier === mobile.moveTouchId);
+  if (!touch) return;
+  mobile.moveTouchId = null;
+  mobile.moveX = 0;
+  mobile.moveY = 0;
+}, { passive: false });
+
+canvas.addEventListener("touchcancel", () => {
+  mobile.moveTouchId = null;
+  mobile.moveX = 0;
+  mobile.moveY = 0;
 }, { passive: false });
 
 ui.joystickShell.addEventListener("touchmove", (event) => {

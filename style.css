@@ -1397,6 +1397,15 @@ body.mobile-ui-active {
     width: 42%;
   }
 
+  .mobile-left {
+    display: none;
+  }
+
+  .mobile-right {
+    width: auto;
+    margin-left: auto;
+  }
+
   .joystick-shell {
     width: 120px;
     height: 120px;
@@ -1517,6 +1526,15 @@ body.mobile-ui-active {
   body.iphone-ui.mobile-ui-active .mobile-right {
     gap: 4px;
     width: 43%;
+  }
+
+  body.iphone-ui.mobile-ui-active .mobile-left {
+    display: none;
+  }
+
+  body.iphone-ui.mobile-ui-active .mobile-right {
+    width: auto;
+    margin-left: auto;
   }
 
   body.iphone-ui.mobile-ui-active .joystick-shell {
