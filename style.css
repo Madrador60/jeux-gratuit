@@ -478,6 +478,10 @@ body.mobile-ui-active .mobile-controls {
   z-index: 1;
 }
 
+.mobile-right {
+  align-items: flex-end;
+}
+
 .joystick-shell,
 .aim-pad {
   position: relative;
@@ -1384,69 +1388,81 @@ body.mobile-ui-active {
     padding-left: max(8px, env(safe-area-inset-left));
     padding-right: max(8px, env(safe-area-inset-right));
     padding-bottom: max(8px, env(safe-area-inset-bottom));
+    align-items: flex-end;
   }
 
   .mobile-left,
   .mobile-right {
-    gap: 6px;
+    gap: 4px;
+    width: 42%;
   }
 
   .joystick-shell {
-    width: 124px;
-    height: 124px;
-    border-radius: 24px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(4, 12, 18, 0.4);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
   }
 
   .joystick-base {
-    width: 92px;
-    height: 92px;
+    width: 86px;
+    height: 86px;
   }
 
   .joystick-stick {
-    width: 48px;
-    height: 48px;
-  }
-
-  .aim-pad {
-    width: 152px;
-    height: 152px;
-    border-radius: 22px;
-  }
-
-  .aim-stick {
-    width: 44px;
-    height: 44px;
-  }
-
-  .aim-reticle {
-    width: 34px;
-    height: 34px;
-  }
-
-  .aim-reticle::before {
+    width: 46px;
     height: 46px;
   }
 
+  .aim-pad {
+    width: 148px;
+    height: 148px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at center, rgba(84, 240, 255, 0.1), transparent 52%),
+      rgba(4, 12, 18, 0.4);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+  }
+
+  .aim-stick {
+    width: 42px;
+    height: 42px;
+  }
+
+  .aim-reticle {
+    width: 28px;
+    height: 28px;
+    opacity: 0.88;
+  }
+
+  .aim-reticle::before {
+    height: 40px;
+  }
+
   .aim-reticle::after {
-    width: 46px;
+    width: 40px;
   }
 
   .mobile-buttons {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    width: 148px;
   }
 
   .mobile-button {
-    min-width: 62px;
-    min-height: 44px;
-    border-radius: 14px;
-    font-size: 0.88rem;
-    padding: 0 10px;
+    min-width: 0;
+    min-height: 40px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    padding: 0 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.16);
   }
 
   .mobile-label {
-    font-size: 0.64rem;
-    padding: 3px 7px;
+    display: none;
   }
 
   .hub-card {
@@ -1500,42 +1516,44 @@ body.mobile-ui-active {
   body.iphone-ui.mobile-ui-active .mobile-left,
   body.iphone-ui.mobile-ui-active .mobile-right {
     gap: 4px;
+    width: 43%;
   }
 
   body.iphone-ui.mobile-ui-active .joystick-shell {
-    width: 112px;
-    height: 112px;
+    width: 108px;
+    height: 108px;
   }
 
   body.iphone-ui.mobile-ui-active .joystick-base {
-    width: 82px;
-    height: 82px;
+    width: 78px;
+    height: 78px;
   }
 
   body.iphone-ui.mobile-ui-active .joystick-stick {
-    width: 42px;
-    height: 42px;
-  }
-
-  body.iphone-ui.mobile-ui-active .aim-pad {
-    width: 138px;
-    height: 138px;
-  }
-
-  body.iphone-ui.mobile-ui-active .aim-stick {
     width: 40px;
     height: 40px;
   }
 
+  body.iphone-ui.mobile-ui-active .aim-pad {
+    width: 132px;
+    height: 132px;
+  }
+
+  body.iphone-ui.mobile-ui-active .aim-stick {
+    width: 38px;
+    height: 38px;
+  }
+
   body.iphone-ui.mobile-ui-active .mobile-buttons {
-    gap: 6px;
+    gap: 5px;
+    width: 132px;
   }
 
   body.iphone-ui.mobile-ui-active .mobile-button {
-    min-width: 54px;
-    min-height: 42px;
-    font-size: 0.82rem;
-    border-radius: 13px;
+    min-width: 0;
+    min-height: 38px;
+    font-size: 0.76rem;
+    border-radius: 999px;
   }
 
   body.iphone-ui.mobile-ui-active .rotate-card {
