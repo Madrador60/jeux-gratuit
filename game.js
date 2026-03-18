@@ -25,8 +25,6 @@ const ui = {
   mobileControls: document.getElementById("mobileControls"),
   joystickShell: document.getElementById("joystickShell"),
   joystickStick: document.getElementById("joystickStick"),
-  aimPad: document.getElementById("aimPad"),
-  aimStick: document.getElementById("aimStick"),
   mobileDashButton: document.getElementById("mobileDashButton"),
   mobileWeaponButton: document.getElementById("mobileWeaponButton"),
   mobileMenuButton: document.getElementById("mobileMenuButton"),
@@ -121,10 +119,7 @@ const ui = {
   recordMood: document.getElementById("recordMood"),
   recordFavoriteWeapon: document.getElementById("recordFavoriteWeapon"),
   mobileUltraClean: document.getElementById("mobileUltraClean"),
-  mobileAutoFire: document.getElementById("mobileAutoFire"),
   mobileHaptics: document.getElementById("mobileHaptics"),
-  touchSensitivity: document.getElementById("touchSensitivity"),
-  touchSensitivityValue: document.getElementById("touchSensitivityValue"),
   mobileButtonScale: document.getElementById("mobileButtonScale"),
   mobileButtonScaleValue: document.getElementById("mobileButtonScaleValue")
 };
@@ -216,14 +211,9 @@ const pointer = { x: 0, y: 0, down: false, active: false };
 const mobile = {
   enabled: false,
   moveTouchId: null,
+  fireTouchId: null,
   moveX: 0,
-  moveY: 0,
-  aimTouchId: null,
-  aimX: 1,
-  aimY: 0,
-  aiming: false,
-  firing: false,
-  lastTapTime: 0
+  moveY: 0
 };
 const skinImages = {};
 Object.entries(skinCatalog).forEach(([id, entry]) => {
@@ -251,9 +241,7 @@ const defaultSettings = {
   autoRestart: true,
   restartDelay: 2,
   mobileUltraClean: false,
-  mobileAutoFire: false,
   mobileHaptics: true,
-  touchSensitivity: 100,
   mobileButtonScale: 100,
   bindings: {
     forward: "z",
@@ -419,7 +407,6 @@ function sanitizeSettings() {
   settings.masterVolume = clamp(Number(settings.masterVolume) || defaultSettings.masterVolume, 0, 100);
   settings.dashVolume = clamp(Number(settings.dashVolume) || defaultSettings.dashVolume, 0, 100);
   settings.restartDelay = clamp(Number(settings.restartDelay) || defaultSettings.restartDelay, 1, 5);
-  settings.touchSensitivity = clamp(Number(settings.touchSensitivity) || defaultSettings.touchSensitivity, 60, 180);
   settings.mobileButtonScale = clamp(Number(settings.mobileButtonScale) || defaultSettings.mobileButtonScale, 80, 150);
   settings.fpsCap = [0, 60, 120, 144].includes(Number(settings.fpsCap)) ? Number(settings.fpsCap) : defaultSettings.fpsCap;
   progress.attackTier = clamp(Number(progress.attackTier) || 0, 0, 8);
@@ -487,16 +474,12 @@ function currentMoodLabel() {
 
 function resetMobileInputs() {
   mobile.moveTouchId = null;
-  mobile.aimTouchId = null;
+  mobile.fireTouchId = null;
   mobile.moveX = 0;
   mobile.moveY = 0;
-  mobile.aimX = 1;
-  mobile.aimY = 0;
-  mobile.aiming = false;
-  mobile.firing = false;
-  mobile.lastTapTime = 0;
+  pointer.down = false;
+  pointer.active = false;
   ui.joystickStick.style.transform = "translate(-50%, -50%)";
-  ui.aimStick.style.transform = "translate(-50%, -50%)";
 }
 
 function playerPowerLabel() {
@@ -995,10 +978,7 @@ function renderUI() {
   ui.recordMood.textContent = currentMoodLabel();
   ui.recordFavoriteWeapon.textContent = weaponConfigs[favoriteWeaponId()].label;
   ui.mobileUltraClean.checked = settings.mobileUltraClean;
-  ui.mobileAutoFire.checked = settings.mobileAutoFire;
   ui.mobileHaptics.checked = settings.mobileHaptics;
-  ui.touchSensitivity.value = String(settings.touchSensitivity);
-  ui.touchSensitivityValue.textContent = `${settings.touchSensitivity}%`;
   ui.mobileButtonScale.value = String(settings.mobileButtonScale);
   ui.mobileButtonScaleValue.textContent = `${settings.mobileButtonScale}%`;
 
@@ -2310,17 +2290,6 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-function updateVirtualPointerFromAim() {
-  if (!player) return;
-  const camera = getCamera();
-  const playerScreenX = player.x - camera.x;
-  const playerScreenY = player.y - camera.y;
-  const aim = normalize(mobile.aimX, mobile.aimY);
-  pointer.x = playerScreenX + aim.x * 180;
-  pointer.y = playerScreenY + aim.y * 180;
-  pointer.active = true;
-}
-
 function updateJoystickFromTouch(touch) {
   const rect = ui.joystickShell.getBoundingClientRect();
   const centerX = rect.left + rect.width / 2;
@@ -2341,46 +2310,12 @@ function resetJoystick() {
   ui.joystickStick.style.transform = "translate(-50%, -50%)";
 }
 
-function updateDirectMoveFromTouch(touch) {
-  if (!player) return;
+function updatePointerFromTouch(touch) {
   const rect = canvas.getBoundingClientRect();
-  const camera = getCamera();
-  const touchX = touch.clientX - rect.left;
-  const touchY = touch.clientY - rect.top;
-  const playerScreenX = player.x - camera.x;
-  const playerScreenY = player.y - camera.y;
-  const dx = touchX - playerScreenX;
-  const dy = touchY - playerScreenY;
-  const distance = Math.hypot(dx, dy);
-  const deadZone = 26;
-  if (distance <= deadZone) {
-    mobile.moveX = 0;
-    mobile.moveY = 0;
-    return;
-  }
-  const dir = normalize(dx, dy);
-  mobile.moveX = dir.x;
-  mobile.moveY = dir.y;
-}
-
-function updateAimFromTouch(touch) {
-  const rect = ui.aimPad.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top + rect.height / 2;
-  const sensitivity = settings.touchSensitivity / 100;
-  const rawX = touch.clientX - centerX;
-  const rawY = touch.clientY - centerY;
-  const maxRadius = rect.width * 0.28;
-  const dist = Math.hypot(rawX, rawY) || 1;
-  const ratio = dist > maxRadius ? maxRadius / dist : 1;
-  const stickX = rawX * ratio;
-  const stickY = rawY * ratio;
-  mobile.aimX = rawX * sensitivity;
-  mobile.aimY = rawY * sensitivity;
-  mobile.aiming = true;
-  mobile.firing = true;
-  ui.aimStick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
-  updateVirtualPointerFromAim();
+  pointer.x = clamp(touch.clientX - rect.left, 0, rect.width);
+  pointer.y = clamp(touch.clientY - rect.top, 0, rect.height);
+  pointer.active = true;
+  return screenToWorld(pointer.x, pointer.y);
 }
 
 function cycleWeapon() {
@@ -2747,21 +2682,9 @@ ui.mobileUltraClean.addEventListener("change", () => {
   renderUI();
 });
 
-ui.mobileAutoFire.addEventListener("change", () => {
-  settings.mobileAutoFire = ui.mobileAutoFire.checked;
-  saveSettings();
-  renderUI();
-});
-
 ui.mobileHaptics.addEventListener("change", () => {
   settings.mobileHaptics = ui.mobileHaptics.checked;
   saveSettings();
-});
-
-ui.touchSensitivity.addEventListener("input", () => {
-  settings.touchSensitivity = Number(ui.touchSensitivity.value);
-  saveSettings();
-  renderUI();
 });
 
 ui.mobileButtonScale.addEventListener("input", () => {
@@ -2834,43 +2757,40 @@ ui.joystickShell.addEventListener("touchstart", (event) => {
 
 canvas.addEventListener("touchstart", (event) => {
   if (!mobile.enabled || overlayOpen) return;
+  event.preventDefault();
   ensureAudio();
   tryAutoFullscreen();
+  if (mobile.fireTouchId !== null) return;
   const touch = event.changedTouches[0];
-  const target = event.target;
-  if (ui.aimPad.contains(target) || ui.mobileDashButton.contains(target) || ui.mobileWeaponButton.contains(target) || ui.mobileMenuButton.contains(target)) {
-    return;
-  }
-  mobile.moveTouchId = touch.identifier;
-  updateDirectMoveFromTouch(touch);
-  const now = performance.now();
-  if (now - mobile.lastTapTime < 260 && player) {
-    const worldPoint = screenToWorld(touch.clientX - canvas.getBoundingClientRect().left, touch.clientY - canvas.getBoundingClientRect().top);
+  if (!touch) return;
+  mobile.fireTouchId = touch.identifier;
+  const worldPoint = updatePointerFromTouch(touch);
+  if (player && worldPoint) {
     fireWeapon(player, worldPoint.x, worldPoint.y);
   }
-  mobile.lastTapTime = now;
-}, { passive: true });
+  pointer.down = true;
+}, { passive: false });
 
 canvas.addEventListener("touchmove", (event) => {
   if (!mobile.enabled) return;
-  const touch = [...event.changedTouches].find((item) => item.identifier === mobile.moveTouchId);
+  const touch = [...event.changedTouches].find((item) => item.identifier === mobile.fireTouchId);
   if (!touch) return;
   event.preventDefault();
-  updateDirectMoveFromTouch(touch);
+  updatePointerFromTouch(touch);
 }, { passive: false });
 
 canvas.addEventListener("touchend", (event) => {
-  const touch = [...event.changedTouches].find((item) => item.identifier === mobile.moveTouchId);
+  const touch = [...event.changedTouches].find((item) => item.identifier === mobile.fireTouchId);
   if (!touch) return;
-  mobile.moveTouchId = null;
-  mobile.moveX = 0;
-  mobile.moveY = 0;
+  mobile.fireTouchId = null;
+  pointer.down = false;
+  pointer.active = false;
 }, { passive: false });
 
 canvas.addEventListener("touchcancel", () => {
-  mobile.moveTouchId = null;
-  mobile.moveX = 0;
-  mobile.moveY = 0;
+  mobile.fireTouchId = null;
+  pointer.down = false;
+  pointer.active = false;
 }, { passive: false });
 
 ui.joystickShell.addEventListener("touchmove", (event) => {
@@ -2890,40 +2810,6 @@ ui.joystickShell.addEventListener("touchend", (event) => {
 ui.joystickShell.addEventListener("touchcancel", () => {
   mobile.moveTouchId = null;
   resetJoystick();
-}, { passive: false });
-
-ui.aimPad.addEventListener("touchstart", (event) => {
-  if (!mobile.enabled) return;
-  event.preventDefault();
-  const touch = event.changedTouches[0];
-  mobile.aimTouchId = touch.identifier;
-  updateAimFromTouch(touch);
-  ensureAudio();
-  tryAutoFullscreen();
-  if (overlayOpen) startMatch();
-}, { passive: false });
-
-ui.aimPad.addEventListener("touchmove", (event) => {
-  const touch = [...event.changedTouches].find((item) => item.identifier === mobile.aimTouchId);
-  if (!touch) return;
-  event.preventDefault();
-  updateAimFromTouch(touch);
-}, { passive: false });
-
-ui.aimPad.addEventListener("touchend", (event) => {
-  const touch = [...event.changedTouches].find((item) => item.identifier === mobile.aimTouchId);
-  if (!touch) return;
-  mobile.aimTouchId = null;
-  mobile.aiming = false;
-  mobile.firing = false;
-  ui.aimStick.style.transform = "translate(-50%, -50%)";
-}, { passive: false });
-
-ui.aimPad.addEventListener("touchcancel", () => {
-  mobile.aimTouchId = null;
-  mobile.aiming = false;
-  mobile.firing = false;
-  ui.aimStick.style.transform = "translate(-50%, -50%)";
 }, { passive: false });
 
 document.addEventListener("touchmove", (event) => {

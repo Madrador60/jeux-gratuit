@@ -480,6 +480,7 @@ body.mobile-ui-active .mobile-controls {
 
 .mobile-right {
   align-items: flex-end;
+  justify-content: flex-end;
 }
 
 .mobile-controls.mobile-modern {
@@ -577,8 +578,9 @@ body.mobile-ui-active .mobile-controls {
 }
 
 .mobile-buttons {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 10px;
 }
 
@@ -1464,17 +1466,16 @@ body.mobile-ui-active {
   }
 
   .mobile-buttons {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
-    width: 148px;
+    width: auto;
   }
 
   .mobile-button {
-    min-width: 0;
-    min-height: 40px;
+    min-width: 72px;
+    min-height: 42px;
     border-radius: 999px;
     font-size: 0.8rem;
-    padding: 0 8px;
+    padding: 0 12px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.16);
   }
 
@@ -1576,14 +1577,15 @@ body.mobile-ui-active {
 
   body.iphone-ui.mobile-ui-active .mobile-buttons {
     gap: 5px;
-    width: 132px;
+    width: auto;
   }
 
   body.iphone-ui.mobile-ui-active .mobile-button {
-    min-width: 0;
-    min-height: 38px;
+    min-width: 68px;
+    min-height: 40px;
     font-size: 0.76rem;
     border-radius: 999px;
+    padding: 0 12px;
   }
 
   body.iphone-ui.mobile-ui-active .rotate-card {
