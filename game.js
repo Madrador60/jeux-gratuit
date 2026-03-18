@@ -630,7 +630,7 @@ function mobileMoveAxis(axis) {
 }
 
 function isFiring() {
-  return pointer.down || (mobile.enabled && mobile.aiming);
+  return pointer.down;
 }
 
 function isMobileViewport() {
@@ -1778,7 +1778,6 @@ function updateApples(dt) {
 
 function updateGame(dt) {
   if (!player) return;
-  if (mobile.enabled && mobile.aiming) updateVirtualPointerFromAim();
   lifetimeStats.timePlayed += dt;
   statsSaveTimer -= dt;
   updateEntityCooldowns(player, dt);

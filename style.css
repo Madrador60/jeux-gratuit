@@ -1410,6 +1410,10 @@ body.mobile-ui-active {
     margin-left: auto;
   }
 
+  .aim-pad {
+    display: none;
+  }
+
   .mobile-controls.mobile-modern {
     justify-content: space-between;
   }
@@ -1547,6 +1551,10 @@ body.mobile-ui-active {
   body.iphone-ui.mobile-ui-active .mobile-right {
     width: auto;
     margin-left: auto;
+  }
+
+  body.iphone-ui.mobile-ui-active .aim-pad {
+    display: none;
   }
 
   body.iphone-ui.mobile-ui-active .joystick-shell {
