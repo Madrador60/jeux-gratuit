@@ -2540,9 +2540,7 @@ canvas.addEventListener("mousedown", (event) => {
   if (event.button !== 0) return;
   pointer.down = true;
   ensureAudio();
-  if (mobile.enabled) {
-    tryAutoFullscreen();
-  }
+  tryAutoFullscreen();
 });
 
 window.addEventListener("mouseup", (event) => {
@@ -2837,6 +2835,8 @@ ui.joystickShell.addEventListener("touchstart", (event) => {
 
 canvas.addEventListener("touchstart", (event) => {
   if (!mobile.enabled || overlayOpen) return;
+  ensureAudio();
+  tryAutoFullscreen();
   const touch = event.changedTouches[0];
   const target = event.target;
   if (ui.aimPad.contains(target) || ui.mobileDashButton.contains(target) || ui.mobileWeaponButton.contains(target) || ui.mobileMenuButton.contains(target)) {
@@ -2848,7 +2848,6 @@ canvas.addEventListener("touchstart", (event) => {
   if (now - mobile.lastTapTime < 260 && player) {
     const worldPoint = screenToWorld(touch.clientX - canvas.getBoundingClientRect().left, touch.clientY - canvas.getBoundingClientRect().top);
     fireWeapon(player, worldPoint.x, worldPoint.y);
-    ensureAudio();
   }
   mobile.lastTapTime = now;
 }, { passive: true });

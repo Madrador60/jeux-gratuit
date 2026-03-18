@@ -482,6 +482,10 @@ body.mobile-ui-active .mobile-controls {
   align-items: flex-end;
 }
 
+.mobile-controls.mobile-modern {
+  padding-top: max(10px, env(safe-area-inset-top));
+}
+
 .joystick-shell,
 .aim-pad {
   position: relative;
@@ -1406,6 +1410,10 @@ body.mobile-ui-active {
     margin-left: auto;
   }
 
+  .mobile-controls.mobile-modern {
+    justify-content: space-between;
+  }
+
   .joystick-shell {
     width: 120px;
     height: 120px;
@@ -1468,6 +1476,10 @@ body.mobile-ui-active {
     font-size: 0.8rem;
     padding: 0 8px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.16);
+  }
+
+  .mobile-button.menu {
+    background: rgba(255, 255, 255, 0.18);
   }
 
   .mobile-label {
