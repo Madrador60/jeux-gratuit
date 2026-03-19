@@ -49,6 +49,14 @@
       <div class="minimap-shell" aria-hidden="true">
         <canvas id="minimap"></canvas>
       </div>
+      <div class="tutorial-banner hidden" id="tutorialBanner" aria-hidden="true">
+        <div class="tutorial-chip">Tutoriel mobile</div>
+        <strong>Deux joysticks, plus simple</strong>
+        <p>Gauche pour bouger. Droite pour viser et tirer. Dash en bas pour esquiver vite.</p>
+        <div class="tutorial-actions">
+          <button class="chip-button" id="tutorialDismissButton" type="button">Compris</button>
+        </div>
+      </div>
 
       <div class="mobile-controls mobile-modern" id="mobileControls" aria-hidden="true">
         <div class="mobile-top-strip">
@@ -72,6 +80,7 @@
             <div class="aim-reticle"></div>
             <div class="aim-stick" id="aimStick"></div>
           </div>
+          <p class="mobile-label">Viser / Tirer</p>
           <div class="mobile-buttons">
             <button class="mobile-button dash" id="mobileDashButton" type="button">Dash</button>
             <button class="mobile-button weapon" id="mobileWeaponButton" type="button">Arme</button>
@@ -87,10 +96,15 @@
         <div class="control-line"><span>Gauche</span><kbd id="moveLeftKey">Q</kbd></div>
         <div class="control-line"><span>Droite</span><kbd id="moveRightKey">D</kbd></div>
         <div class="control-line"><span>Dash</span><kbd id="dashKey">SHIFT</kbd></div>
+        <div class="control-line"><span>Dash 2</span><kbd>ESPACE</kbd></div>
         <div class="control-line"><span>Pause</span><kbd id="pauseKey">P</kbd></div>
         <div class="control-line"><span>Recommencer</span><kbd id="restartKey">R</kbd></div>
         <div class="control-line"><span>Armes</span><kbd>&amp; É " '</kbd></div>
-        <p class="hint">Souris pour viser, clic gauche pour tirer.</p>
+        <div class="control-line"><span>Arme +</span><kbd>MOLETTE</kbd></div>
+        <div class="control-line"><span>Menu</span><kbd>TAB</kbd></div>
+        <div class="control-line"><span>Mini-carte</span><kbd>M</kbd></div>
+        <div class="control-line"><span>Plein ecran</span><kbd>F</kbd></div>
+        <p class="hint">Souris pour viser, clic gauche pour tirer, molette pour tourner vite entre les armes.</p>
       </aside>
 
       <aside class="hud hud-right">
@@ -193,7 +207,7 @@
               <button class="menu-choice" type="button" data-weapon="sniper">Sniper</button>
               <button class="menu-choice" type="button" data-weapon="burst">Rafale</button>
             </div>
-            <p class="hint">`&`, `é`, `"` et `'` changent aussi l'arme en jeu sur PC.</p>
+            <p class="hint">`&`, `é`, `"` et `'` changent aussi l'arme sur PC. La molette souris les fait tourner encore plus vite.</p>
           </div>
         </div>
 
@@ -225,7 +239,7 @@
             </div>
           </div>
         </div>
-        <p class="hint home-hint">Sur PC les armes changent avec `&`, `é`, `"` et `'`. Le gros bouton `Jouer` relance directement avec vos choix actuels.</p>
+        <p class="hint home-hint">Sur PC: `F` plein ecran, `M` mini-carte, `Tab` menu rapide, `Espace` en 2e dash. Le gros bouton `Jouer` relance directement avec vos choix actuels.</p>
       </section>
 
       <section class="tab-panel" data-panel="shop">
@@ -426,7 +440,7 @@
                 <strong id="mobileButtonScaleValue">100%</strong>
               </label>
             </div>
-            <p class="hint">Joystick gauche pour bouger. Touchez et glissez sur l'arene pour viser et tirer.</p>
+            <p class="hint">Joystick gauche pour bouger. Joystick droit pour viser et tirer. Le tutoriel mobile apparait aussi la premiere fois.</p>
           </div>
         </div>
       </section>

@@ -6,6 +6,9 @@ const minimapCtx = minimapCanvas.getContext("2d");
 const ui = {
   appShell: document.querySelector(".app-shell"),
   viewport: document.querySelector(".viewport"),
+  minimapShell: document.querySelector(".minimap-shell"),
+  tutorialBanner: document.getElementById("tutorialBanner"),
+  tutorialDismissButton: document.getElementById("tutorialDismissButton"),
   levelLabel: document.getElementById("levelLabel"),
   bestLevel: document.getElementById("bestLevel"),
   modeLabel: document.getElementById("modeLabel"),
@@ -133,14 +136,15 @@ const STORAGE_RECORD = "arena_fun_record_v1";
 const STORAGE_STATS = "arena_fun_stats_v1";
 const STORAGE_PROGRESS = "arena_fun_progress_v1";
 const STORAGE_AUDIO_BOOST = "arena_fun_audio_boost_v1";
+const STORAGE_HINTS = "arena_fun_hints_v1";
 const DPR = Math.min(window.devicePixelRatio || 1, 2);
 const arena = { width: 2200, height: 1400 };
 
 const weaponConfigs = {
-  rifle: { label: "RIFLE", reload: 0.11, pellets: 1, spread: 0.012, speed: 1160, damageMul: 1, life: 0.92, radiusMul: 1, shake: 2.5, burstFx: 7 },
-  shotgun: { label: "SHOTGUN", reload: 0.46, pellets: 7, spread: 0.34, speed: 880, damageMul: 0.54, life: 0.44, radiusMul: 1.18, shake: 6, burstFx: 12 },
-  sniper: { label: "SNIPER", reload: 0.94, pellets: 1, spread: 0.0012, speed: 1680, damageMul: 2.6, life: 1.18, radiusMul: 0.96, shake: 9, burstFx: 10 },
-  burst: { label: "RAFALE", reload: 0.31, pellets: 3, spread: 0.055, speed: 1220, damageMul: 0.84, life: 0.82, radiusMul: 0.92, shake: 4.5, burstFx: 8 }
+  rifle: { label: "RIFLE", reload: 0.1, pellets: 1, spread: 0.01, speed: 1240, damageMul: 1, life: 0.96, radiusMul: 1, shake: 2.5, burstFx: 7 },
+  shotgun: { label: "SHOTGUN", reload: 0.52, pellets: 8, spread: 0.38, speed: 780, damageMul: 0.7, life: 0.38, radiusMul: 1.28, shake: 7.4, burstFx: 15 },
+  sniper: { label: "SNIPER", reload: 1.02, pellets: 1, spread: 0.001, speed: 1820, damageMul: 3.1, life: 1.32, radiusMul: 0.88, shake: 10.6, burstFx: 12 },
+  burst: { label: "RAFALE", reload: 0.27, pellets: 3, spread: 0.07, speed: 1280, damageMul: 0.88, life: 0.86, radiusMul: 0.96, shake: 4.6, burstFx: 10 }
 };
 
 const bulletStyles = ["dot", "streak", "plasma", "spark", "ring", "comet", "shard", "bolt", "pulse", "nova"];
@@ -210,6 +214,65 @@ const obstacleLayouts = [
   ]
 ];
 
+const mapCatalog = [
+  {
+    id: "neon-docks",
+    name: "Dock Neon",
+    theme: "neo",
+    layoutIndex: 0,
+    colors: {
+      sky: "#0f2430",
+      floor: "#081119",
+      line: "rgba(255,255,255,0.04)",
+      obstacleA: "rgba(29,52,66,0.95)",
+      obstacleB: "rgba(10,22,30,0.98)",
+      obstacleStroke: "rgba(84,240,255,0.16)"
+    }
+  },
+  {
+    id: "ember-forge",
+    name: "Forge Rouge",
+    theme: "ember",
+    layoutIndex: 1,
+    colors: {
+      sky: "#2f1710",
+      floor: "#120906",
+      line: "rgba(255,167,120,0.05)",
+      obstacleA: "rgba(70,31,22,0.95)",
+      obstacleB: "rgba(28,12,8,0.98)",
+      obstacleStroke: "rgba(255,164,84,0.18)"
+    }
+  },
+  {
+    id: "toxic-lab",
+    name: "Lab Vert",
+    theme: "toxic",
+    layoutIndex: 2,
+    colors: {
+      sky: "#0b2a1d",
+      floor: "#08150f",
+      line: "rgba(145,255,135,0.05)",
+      obstacleA: "rgba(20,56,34,0.95)",
+      obstacleB: "rgba(8,22,14,0.98)",
+      obstacleStroke: "rgba(145,255,135,0.18)"
+    }
+  },
+  {
+    id: "mirror-core",
+    name: "Core Miroir",
+    theme: "neo",
+    layoutIndex: 3,
+    colors: {
+      sky: "#12273a",
+      floor: "#09121d",
+      line: "rgba(141,212,255,0.045)",
+      obstacleA: "rgba(22,44,70,0.95)",
+      obstacleB: "rgba(9,20,33,0.98)",
+      obstacleStroke: "rgba(141,212,255,0.18)"
+    }
+  }
+];
+
 const keys = new Set();
 const pointer = { x: 0, y: 0, down: false, active: false };
 const mobile = {
@@ -229,6 +292,29 @@ Object.entries(skinCatalog).forEach(([id, entry]) => {
     img.src = entry.image;
     skinImages[id] = img;
   }
+});
+const audioCatalog = {
+  rifle: ["assets/audio/rifle.wav"],
+  shotgun: ["assets/audio/shotgun.wav"],
+  sniper: ["assets/audio/sniper.wav"],
+  burst: ["assets/audio/burst.wav"],
+  dash: ["assets/audio/dash.wav"],
+  hit: ["assets/audio/hit.wav"],
+  coin: ["assets/audio/coin.wav"],
+  shield: ["assets/audio/shield.wav"],
+  purchase: ["assets/audio/purchase.wav"],
+  boss: ["assets/audio/boss.wav"],
+  level: ["assets/audio/level.wav"],
+  ambientLoop: ["assets/audio/ambient_loop.wav"]
+};
+const audioPools = {};
+Object.entries(audioCatalog).forEach(([key, sources]) => {
+  audioPools[key] = sources.map((src) => {
+    const audio = new Audio(src);
+    audio.preload = "auto";
+    audio.loop = key === "ambientLoop";
+    return audio;
+  });
 });
 
 const defaultSettings = {
@@ -265,11 +351,14 @@ let settings = loadSettings();
 let bestLevel = loadBestLevel();
 let lifetimeStats = loadStats();
 let progress = loadProgress();
+let hints = loadHints();
 let listeningAction = null;
 let currentTab = "play";
 let audioContext = null;
+let audioAssetsPrimed = false;
 let musicClock = 0;
 let ambientNodes = null;
+let ambientLoopTrack = null;
 let lastTime = 0;
 let accumulator = 0;
 let lastRenderTime = 0;
@@ -290,6 +379,9 @@ let statsSaveTimer = 3;
 let lastPlayerHitKind = "enemy";
 let coarseMedia = null;
 let rotateNoticeDismissed = false;
+let hitMarkerTimer = 0;
+let hitMarkerColor = "#ffffff";
+let minimapVisible = true;
 
 let player;
 let ally = null;
@@ -303,9 +395,13 @@ const world = {
   particles: [],
   pickups: [],
   hazards: [],
+  telegraphs: [],
+  damageTexts: [],
   level: 1,
   tier: "Facile",
   theme: "neo",
+  mapId: "neon-docks",
+  mapName: "Dock Neon",
   bossLevel: false,
   eventType: "standard",
   eventTimer: 0,
@@ -393,8 +489,89 @@ function loadProgress() {
   }
 }
 
+function loadHints() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_HINTS) || "null");
+    return {
+      mobileTwinStick: Boolean(parsed?.mobileTwinStick)
+    };
+  } catch {
+    return { mobileTwinStick: false };
+  }
+}
+
+function saveHints() {
+  localStorage.setItem(STORAGE_HINTS, JSON.stringify(hints));
+}
+
 function saveProgress() {
   localStorage.setItem(STORAGE_PROGRESS, JSON.stringify(progress));
+}
+
+function currentMapSpec() {
+  return mapCatalog.find((item) => item.id === world.mapId) || mapCatalog[0];
+}
+
+function weaponAccent(weaponId) {
+  return {
+    rifle: "#63ebff",
+    shotgun: "#ffd166",
+    sniper: "#ff8ddb",
+    burst: "#ff9e6b"
+  }[weaponId] || "#63ebff";
+}
+
+function primeAudioAssets() {
+  if (audioAssetsPrimed) return;
+  audioAssetsPrimed = true;
+  Object.values(audioPools).flat().forEach((audio) => {
+    audio.volume = 0;
+    audio.load?.();
+  });
+}
+
+function pickAudioInstance(key) {
+  const pool = audioPools[key];
+  if (!pool?.length) return null;
+  let audio = pool.find((candidate) => candidate.paused || candidate.ended);
+  if (!audio) {
+    audio = pool[0].cloneNode();
+    audio.preload = "auto";
+    audio.loop = key === "ambientLoop";
+    pool.push(audio);
+  }
+  return audio;
+}
+
+function playSample(key, options = {}) {
+  const audio = pickAudioInstance(key);
+  if (!audio) return false;
+  const {
+    volume = 0.3,
+    playbackRate = 1,
+    restart = true
+  } = options;
+  audio.volume = clamp(volume * (settings.masterVolume / 100), 0, 1);
+  audio.playbackRate = playbackRate;
+  if (restart) {
+    audio.currentTime = 0;
+  }
+  const playPromise = audio.play();
+  playPromise?.catch?.(() => {});
+  return true;
+}
+
+function pushDamageText(x, y, text, color = "#ffffff", scale = 1) {
+  world.damageTexts.push({
+    x,
+    y,
+    text,
+    color,
+    scale,
+    life: 0.58,
+    maxLife: 0.58,
+    vy: -44
+  });
 }
 
 function saveBestLevel(level) {
@@ -515,9 +692,17 @@ function favoriteWeaponId() {
   return Object.keys(weaponConfigs).sort((a, b) => (usage[b] || 0) - (usage[a] || 0))[0] || "rifle";
 }
 
+function mapForLevel(level) {
+  return mapCatalog[(level - 1) % mapCatalog.length] || mapCatalog[0];
+}
+
 function setMapLayout(level) {
-  const layout = obstacleLayouts[(level - 1) % obstacleLayouts.length] || obstacleLayouts[0];
+  const map = mapForLevel(level);
+  const layout = obstacleLayouts[map.layoutIndex] || obstacleLayouts[0];
   obstacles = layout.map((item) => ({ ...item }));
+  world.mapId = map.id;
+  world.mapName = map.name;
+  world.theme = map.theme;
 }
 
 function chooseSpecialEvent(level) {
@@ -569,7 +754,7 @@ function enemyBlueprint(kind, level, diff) {
     runner: { hp: Math.round(diff.enemyHp * 0.78), speed: diff.enemySpeed * 1.25, weapon: "burst", skin: "fox", color: "#ff9d66", reward: 12, radius: 28, range: 250, dashChance: 0.028, damage: Math.max(7, diff.enemyDamage - 2), reload: Math.max(0.1, diff.enemyReload * 0.78) },
     tank: { hp: Math.round(diff.enemyHp * 1.7), speed: diff.enemySpeed * 0.8, weapon: "shotgun", skin: "tank", color: "#ff8d77", reward: 18, radius: 38, range: 210, dashChance: 0.008, damage: diff.enemyDamage + 3, reload: diff.enemyReload * 1.3 },
     sniper: { hp: Math.round(diff.enemyHp * 0.92), speed: diff.enemySpeed * 0.9, weapon: "sniper", skin: "ninja", color: "#ff6ca8", reward: 16, radius: 28, range: 560, dashChance: 0.006, damage: diff.enemyDamage + 6, reload: Math.max(0.18, diff.enemyReload * 1.4) },
-    boss: { hp: Math.round(diff.enemyHp * 3.2), speed: diff.enemySpeed * 0.86, weapon: "burst", skin: "poop", color: "#ffbd59", reward: 42, radius: 50, range: 420, dashChance: 0.012, damage: diff.enemyDamage + 2, reload: Math.max(0.18, diff.enemyReload * 0.95) }
+    boss: { hp: Math.round(diff.enemyHp * 3.2), speed: diff.enemySpeed * 0.86, weapon: "burst", skin: "dragon", color: "#ffbd59", reward: 42, radius: 50, range: 420, dashChance: 0.012, damage: diff.enemyDamage + 2, reload: Math.max(0.18, diff.enemyReload * 0.95) }
   };
   return blueprints[kind] || blueprints.grunt;
 }
@@ -774,7 +959,6 @@ function resetLevel(level, freshRun = false) {
   const enemyKinds = chooseEnemyKinds(level, settings.mode);
   world.level = level;
   world.tier = diff.tier;
-  world.theme = level % 3 === 0 ? "ember" : level % 3 === 1 ? "neo" : "toxic";
   world.bossLevel = level % 5 === 0;
   world.eventType = chooseSpecialEvent(level);
   world.eventTimer = 5;
@@ -785,10 +969,13 @@ function resetLevel(level, freshRun = false) {
   levelToast = 1;
   impactFlash = 0;
   cameraShake = 0;
+  hitMarkerTimer = 0;
   world.bullets = [];
   world.particles = [];
   world.pickups = [];
   world.hazards = [];
+  world.telegraphs = [];
+  world.damageTexts = [];
 
   if (freshRun || !player) {
     player = createEntity(420, 680, { color: settings.playerColor, skin: settings.skin, team: "ally" });
@@ -827,8 +1014,8 @@ function resetLevel(level, freshRun = false) {
 
   saveBestLevel(level);
   ui.status.textContent = world.bossLevel
-    ? `Boss du niveau ${world.level} - attention. Event: ${eventLabel(world.eventType)}.`
-    : `Niveau ${world.level} - ${world.tier} - ${currentModeLabel()} - ${eventLabel(world.eventType)}.`;
+    ? `Boss du niveau ${world.level} sur ${world.mapName} - attention. Event: ${eventLabel(world.eventType)}.`
+    : `Niveau ${world.level} - ${world.tier} - ${world.mapName} - ${eventLabel(world.eventType)}.`;
   if (!freshRun && level > 1) {
     playLevelUpSound();
   }
@@ -910,6 +1097,7 @@ function setBinding(action, key) {
 
 function renderUI() {
   document.body.classList.toggle("playing", gameStarted && !overlayOpen);
+  ui.minimapShell?.classList.toggle("hidden", !minimapVisible);
   ui.levelLabel.textContent = String(world.level);
   ui.bestLevel.textContent = String(bestLevel);
   ui.modeLabel.textContent = currentModeLabel();
@@ -922,12 +1110,14 @@ function renderUI() {
   ui.powerLabel.textContent = String(playerPowerLabel());
   if (ui.shopCoinsTotal) ui.shopCoinsTotal.textContent = `${progress.coins} pieces`;
   if (ui.shopPowerTotal) ui.shopPowerTotal.textContent = `Niveau ${playerPowerLabel()}`;
-  if (ui.shopUpgradeTip) ui.shopUpgradeTip.textContent = "Degats = frappe plus fort, Vie = tank plus, Dash = plus d'energie, Cadence = tire plus vite.";
+  if (ui.shopUpgradeTip) ui.shopUpgradeTip.textContent = "Degats = plus fort, Vie = plus tanky, Dash = plus nerveux, Cadence = plus rapide.";
   ui.shieldLabel.textContent = player && player.shieldTimer > 0 ? `${player.shieldTimer.toFixed(1)}s` : "OFF";
   ui.mobileWeaponButton.textContent = weaponConfigs[settings.weapon].label.replace("SHOTGUN", "POMPE");
   ui.fps.textContent = String(shownFps);
   document.body.style.setProperty("--mobile-scale", `${settings.mobileButtonScale / 100}`);
   document.body.classList.toggle("mobile-ultra-clean-active", mobile.enabled && settings.mobileUltraClean && !overlayOpen);
+  ui.tutorialBanner.classList.toggle("hidden", !(mobile.enabled && !hints.mobileTwinStick && !overlayOpen));
+  ui.tutorialBanner.setAttribute("aria-hidden", String(ui.tutorialBanner.classList.contains("hidden")));
 
   if (player) {
     ui.playerHp.style.width = `${(player.hp / player.maxHp) * 100}%`;
@@ -1033,6 +1223,13 @@ function renderUI() {
 
 function renderShop() {
   ui.shopGrid.innerHTML = "";
+  const sections = {
+    equipped: [],
+    owned: [],
+    buyable: [],
+    locked: []
+  };
+
   Object.entries(skinCatalog).forEach(([id, info]) => {
     const unlocked = isSkinUnlocked(id);
     const canBuy = progress.coins >= info.price;
@@ -1042,8 +1239,10 @@ function renderShop() {
     const thumb = info.image
       ? `<div class="shop-thumb" style="background-image:url('${info.image}')"></div>`
       : `<div class="shop-thumb" style="background:${settings.playerColor}; box-shadow:0 0 18px ${settings.playerColor};"></div>`;
-    const meta = unlocked ? "Possede" : `${info.price} pieces${canBuy ? " - achetable" : " - pas assez"}`;
-    item.innerHTML = `${thumb}<strong>${info.name}</strong><small class="shop-meta">${skinFlavor(id)}</small><small class="shop-meta">${meta}</small>`;
+    const missingCoins = Math.max(0, info.price - progress.coins);
+    const meta = unlocked ? "Possede" : canBuy ? "Achetable maintenant" : `Il manque ${missingCoins} pieces`;
+    const priceChip = unlocked ? '<small class="shop-item-price">Equipe / possede</small>' : `<small class="shop-item-price">${info.price} pieces</small>`;
+    item.innerHTML = `${thumb}<strong>${info.name}</strong><small class="shop-meta">${skinFlavor(id)}</small><small class="shop-meta">${meta}</small>${priceChip}`;
     item.addEventListener("click", () => {
       if (!unlocked) {
         if (progress.coins < info.price) {
@@ -1061,9 +1260,30 @@ function renderShop() {
       saveSettings();
       renderUI();
     });
-    ui.shopGrid.appendChild(item);
+
+    if (settings.skin === id) sections.equipped.push(item);
+    else if (unlocked) sections.owned.push(item);
+    else if (canBuy) sections.buyable.push(item);
+    else sections.locked.push(item);
   });
-  ui.shopHint.textContent = `Pieces: ${progress.coins}. Achetez puis equipez vos skins ici.`;
+
+  [
+    ["equipped", "Equipe maintenant"],
+    ["buyable", "Achetables"],
+    ["owned", "Deja possedes"],
+    ["locked", "A economiser"]
+  ].forEach(([key, label]) => {
+    const items = sections[key];
+    if (!items.length) return;
+    const section = document.createElement("section");
+    section.className = "shop-section";
+    section.innerHTML = `<div class="shop-section-title"><strong>${label}</strong><span>${items.length}</span></div><div class="shop-section-grid"></div>`;
+    const grid = section.querySelector(".shop-section-grid");
+    items.forEach((item) => grid.appendChild(item));
+    ui.shopGrid.appendChild(section);
+  });
+
+  ui.shopHint.textContent = `Pieces: ${progress.coins}. Achetez ici, puis equipez direct votre skin prefere.`;
 }
 
 function vibrate(pattern) {
@@ -1106,6 +1326,7 @@ function addCoins(amount) {
 }
 
 function ensureAudio() {
+  primeAudioAssets();
   if (!audioContext) {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return null;
@@ -1137,18 +1358,30 @@ function tone({ frequency, slideTo = null, duration = 0.12, volume = 0.1, type =
 }
 
 function playShootSound(weaponId = settings.weapon) {
+  const sampleKey = {
+    rifle: "rifle",
+    shotgun: "shotgun",
+    sniper: "sniper",
+    burst: "burst"
+  }[weaponId] || "rifle";
   const shotProfile = {
     rifle: { base: 1, extra: 1 },
     shotgun: { base: 0.75, extra: 0.8 },
     sniper: { base: 0.55, extra: 1.35 },
     burst: { base: 1.15, extra: 0.95 }
   }[weaponId] || { base: 1, extra: 1 };
+  const usedSample = playSample(sampleKey, {
+    volume: weaponId === "sniper" ? 0.42 : weaponId === "shotgun" ? 0.38 : 0.34,
+    playbackRate: weaponId === "burst" ? 1.08 : weaponId === "sniper" ? 0.92 : 1
+  });
+  if (usedSample) return;
   tone({ frequency: 240 * shotProfile.base, slideTo: 140, duration: 0.06, volume: 0.08 * shotProfile.extra, type: "square" });
   tone({ frequency: 420 * shotProfile.extra, slideTo: 250, duration: 0.05, volume: 0.05, type: "triangle" });
 }
 
 function playDashSound() {
   const mult = settings.dashVolume / 100;
+  if (playSample("dash", { volume: 0.34 * mult, playbackRate: 1 })) return;
   tone({ frequency: 300, slideTo: 100, duration: 0.14, volume: 0.16 * mult, type: "sawtooth" });
 }
 
@@ -1157,6 +1390,7 @@ function playStepSound(speedRatio) {
 }
 
 function playHitSound() {
+  if (playSample("hit", { volume: 0.24, playbackRate: 1 })) return;
   tone({ frequency: 180, slideTo: 100, duration: 0.07, volume: 0.08, type: "square" });
 }
 
@@ -1165,18 +1399,42 @@ function playAppleSound() {
 }
 
 function playWinSound() {
+  if (playSample("level", { volume: 0.28, playbackRate: 1.04 })) return;
   tone({ frequency: 360, slideTo: 540, duration: 0.18, volume: 0.1, type: "triangle" });
   tone({ frequency: 540, slideTo: 760, duration: 0.22, volume: 0.08, type: "triangle" });
 }
 
 function playMusicPulse() {
+  if (ambientLoopTrack && !ambientLoopTrack.paused) return;
   const notes = [246.94, 293.66, 329.63, 392];
   const note = notes[Math.floor((performance.now() / 360) % notes.length)];
   tone({ frequency: note, slideTo: note * 1.01, duration: 0.16, volume: 0.045, type: "triangle" });
 }
 
 function startAmbientMusic() {
-  const audio = ensureAudio();
+  ensureAudio();
+  const track = audioPools.ambientLoop?.[0] || null;
+  if (track) {
+    ambientLoopTrack = track;
+    ambientLoopTrack.loop = true;
+    ambientLoopTrack.volume = clamp((settings.masterVolume / 100) * 0.22, 0, 1);
+    if (ambientLoopTrack.paused) {
+      ambientLoopTrack.currentTime = 0;
+      ambientLoopTrack.play().catch(() => {
+        ambientLoopTrack = null;
+        if (!ambientNodes && audioContext) {
+          ambientNodes = {
+            nextShift: performance.now() + 260,
+            chordIndex: 0,
+            step: 0
+          };
+        }
+      });
+    }
+    ambientNodes = null;
+    return;
+  }
+  const audio = audioContext;
   if (!audio || ambientNodes) return;
   ambientNodes = {
     nextShift: performance.now() + 260,
@@ -1186,10 +1444,18 @@ function startAmbientMusic() {
 }
 
 function stopAmbientMusic() {
+  if (ambientLoopTrack) {
+    ambientLoopTrack.pause();
+    ambientLoopTrack.currentTime = 0;
+  }
   ambientNodes = null;
 }
 
 function updateAmbientMusic() {
+  if (ambientLoopTrack && !ambientLoopTrack.paused) {
+    ambientLoopTrack.volume = clamp((settings.masterVolume / 100) * 0.22, 0, 1);
+    return;
+  }
   if (!ambientNodes || !audioContext) return;
   const nowPerf = performance.now();
   if (nowPerf < ambientNodes.nextShift) return;
@@ -1243,14 +1509,17 @@ function playResumeSound() {
 }
 
 function playCoinSound() {
+  if (playSample("coin", { volume: 0.34, playbackRate: 1 })) return;
   tone({ frequency: 680, slideTo: 980, duration: 0.07, volume: 0.06, type: "triangle" });
 }
 
 function playShieldSound() {
+  if (playSample("shield", { volume: 0.32, playbackRate: 1 })) return;
   tone({ frequency: 320, slideTo: 760, duration: 0.14, volume: 0.08, type: "triangle" });
 }
 
 function playPurchaseSound() {
+  if (playSample("purchase", { volume: 0.28, playbackRate: 1 })) return;
   tone({ frequency: 420, slideTo: 620, duration: 0.08, volume: 0.06, type: "triangle" });
   tone({ frequency: 620, slideTo: 860, duration: 0.12, volume: 0.04, type: "triangle" });
 }
@@ -1264,6 +1533,7 @@ function playTabSound() {
 }
 
 function playBossBurstSound() {
+  if (playSample("boss", { volume: 0.36, playbackRate: 0.92 })) return;
   tone({ frequency: 150, slideTo: 90, duration: 0.18, volume: 0.08, type: "sawtooth" });
   tone({ frequency: 420, slideTo: 220, duration: 0.12, volume: 0.05, type: "square" });
 }
@@ -1326,6 +1596,7 @@ function playHealSound() {
 }
 
 function playLevelUpSound() {
+  if (playSample("level", { volume: 0.26, playbackRate: 1.08 })) return;
   tone({ frequency: 340, slideTo: 560, duration: 0.11, volume: 0.06, type: "triangle" });
   tone({ frequency: 560, slideTo: 820, duration: 0.14, volume: 0.05, type: "triangle" });
 }
@@ -1400,6 +1671,7 @@ function collectApple(entity, appleIndex) {
       world.session.apples += 1;
       lifetimeStats.apples += 1;
       saveStats();
+      pushDamageText(pickup.x, pickup.y - 28, "+28", "#91ff87", 1.06);
     }
     playAppleSound();
     if (entity === player) playHealSound();
@@ -1410,12 +1682,14 @@ function collectApple(entity, appleIndex) {
       lifetimeStats.coinsEarned += 2;
       saveProgress();
       saveStats();
+      pushDamageText(pickup.x, pickup.y - 24, "+2$", "#ffd166", 1.02);
       playCoinSound();
     }
   } else if (pickup.kind === "shield") {
     spawnBurst(pickup.x, pickup.y, "#63ebff", 14, 220);
     entity.shieldTimer = Math.max(entity.shieldTimer, 10);
     if (entity === player) {
+      pushDamageText(pickup.x, pickup.y - 26, "SHIELD", "#63ebff", 0.96);
       playShieldSound();
     }
   }
@@ -1446,7 +1720,18 @@ function fireWeapon(entity, targetX, targetY, options = {}) {
       life: config.life,
       team: entity.team,
       sourceArchetype: entity.archetype,
-      style: entity.team === "ally" ? settings.bulletStyle : (entity.archetype === "boss" ? "plasma" : entity.preferredWeapon === "sniper" ? "streak" : "dot")
+      weaponId,
+      style: entity.team === "ally"
+        ? settings.bulletStyle
+        : (entity.archetype === "boss"
+          ? "plasma"
+          : entity.preferredWeapon === "shotgun"
+            ? "ring"
+            : entity.preferredWeapon === "sniper"
+              ? "streak"
+              : entity.preferredWeapon === "burst"
+                ? "spark"
+                : "dot")
     });
   }
 
@@ -1463,6 +1748,13 @@ function fireWeapon(entity, targetX, targetY, options = {}) {
     cameraShake = Math.max(cameraShake, config.shake);
     playShootSound(weaponId);
     vibrate(12);
+    if (weaponId === "shotgun") {
+      spawnBurst(entity.x + Math.cos(baseAngle) * entity.radius, entity.y + Math.sin(baseAngle) * entity.radius, "#ffd166", 14, 130);
+    } else if (weaponId === "sniper") {
+      spawnBurst(entity.x + Math.cos(baseAngle) * entity.radius, entity.y + Math.sin(baseAngle) * entity.radius, "#ff8ddb", 10, 180);
+    } else if (weaponId === "burst") {
+      spawnBurst(entity.x + Math.cos(baseAngle) * entity.radius, entity.y + Math.sin(baseAngle) * entity.radius, "#ff9e6b", 10, 110);
+    }
   }
 }
 
@@ -1485,10 +1777,11 @@ function dash(entity, dirX, dirY) {
   }
 }
 
-function damageEntity(entity, amount, fromColor, sourceArchetype = "enemy") {
+function damageEntity(entity, amount, fromColor, sourceArchetype = "enemy", sourceTeam = "enemy", sourceWeapon = "rifle") {
   if (!entity || entity.hp <= 0) return;
   if (entity.shieldTimer > 0) {
     spawnBurst(entity.x, entity.y, "#63ebff", 8, 160);
+    pushDamageText(entity.x, entity.y - entity.radius - 8, "BLOC", "#63ebff", 0.9);
     if (entity === player) {
       tone({ frequency: 420, slideTo: 220, duration: 0.06, volume: 0.08, type: "square" });
     }
@@ -1497,6 +1790,13 @@ function damageEntity(entity, amount, fromColor, sourceArchetype = "enemy") {
   entity.hp = clamp(entity.hp - amount, 0, entity.maxHp);
   if (entity === player) {
     lastPlayerHitKind = sourceArchetype === "boss" ? "boss" : "enemy";
+  }
+  const fromPlayerTeam = sourceTeam === "ally" && entity.team === "enemy";
+  const damageTextColor = fromPlayerTeam ? weaponAccent(sourceWeapon) : entity === player ? "#ff8ba1" : fromColor;
+  pushDamageText(entity.x, entity.y - entity.radius - 10, `-${Math.round(amount)}`, damageTextColor, fromPlayerTeam ? 1.04 : 0.98);
+  if (fromPlayerTeam) {
+    hitMarkerTimer = entity.hp <= 0 ? 0.22 : 0.13;
+    hitMarkerColor = entity.hp <= 0 ? "#ffd166" : damageTextColor;
   }
   entity.hitFlash = 0.14;
   impactFlash = 0.14;
@@ -1638,10 +1938,51 @@ function fireBossRadialBurst(entity) {
       color: "#ffbd59",
       life: 1.1,
       team: "enemy",
-      sourceArchetype: "boss"
+      sourceArchetype: "boss",
+      weaponId: "boss",
+      style: "pulse"
     });
   }
   spawnBurst(entity.x, entity.y, "#ffbd59", 18, 180);
+}
+
+function addBossTelegraph(type, enemy) {
+  if (!enemy || enemy.hp <= 0) return;
+  if (type === "burst") {
+    world.telegraphs.push({
+      type,
+      enemy,
+      x: enemy.x,
+      y: enemy.y,
+      radius: 180,
+      life: 0.95,
+      maxLife: 0.95
+    });
+    ui.status.textContent = "Le boss charge une salve circulaire.";
+  } else if (type === "charge") {
+    world.telegraphs.push({
+      type,
+      enemy,
+      x: enemy.x,
+      y: enemy.y,
+      targetX: player.x,
+      targetY: player.y,
+      life: 0.72,
+      maxLife: 0.72
+    });
+    ui.status.textContent = "Le boss verrouille une charge.";
+  } else if (type === "hazard") {
+    world.telegraphs.push({
+      type,
+      enemy,
+      x: player.x,
+      y: player.y,
+      radius: 120,
+      life: 1,
+      maxLife: 1
+    });
+    ui.status.textContent = "Le boss prepare une zone toxique.";
+  }
 }
 
 function spawnHazard(x, y, radius, life, type = "toxic", sourceArchetype = "enemy") {
@@ -1653,23 +1994,40 @@ function updateBossPatterns(dt) {
     if (enemy.hp <= 0 || enemy.archetype !== "boss" || enemy.patternCooldown > 0) return;
     const roll = Math.random();
     if (roll < 0.38) {
-      fireBossRadialBurst(enemy);
-      ui.status.textContent = "Le boss lance une salve circulaire.";
-      playBossBurstSound();
+      addBossTelegraph("burst", enemy);
     } else if (roll < 0.7) {
-      const chargeDir = normalize(player.x - enemy.x, player.y - enemy.y);
-      enemy.vx += chargeDir.x * 760;
-      enemy.vy += chargeDir.y * 760;
-      spawnBurst(enemy.x, enemy.y, "#ff8c66", 16, 180);
-      ui.status.textContent = "Le boss fait une charge brutale.";
-      playBossJumpSound();
+      addBossTelegraph("charge", enemy);
     } else {
-      spawnHazard(player.x, player.y, 120, 6, "toxic", "boss");
-      ui.status.textContent = "Zone toxique posee par le boss.";
-      playHazardSound();
+      addBossTelegraph("hazard", enemy);
     }
     cameraShake = Math.max(cameraShake, 8);
-    enemy.patternCooldown = 2.8;
+    enemy.patternCooldown = 3.55;
+  });
+}
+
+function updateTelegraphs(dt) {
+  world.telegraphs = world.telegraphs.filter((telegraph) => {
+    telegraph.life -= dt;
+    if (telegraph.enemy && telegraph.enemy.hp <= 0) return false;
+    if (telegraph.life > 0) return true;
+
+    if (telegraph.type === "burst" && telegraph.enemy?.hp > 0) {
+      fireBossRadialBurst(telegraph.enemy);
+      playBossBurstSound();
+    } else if (telegraph.type === "charge" && telegraph.enemy?.hp > 0) {
+      const chargeDir = normalize(telegraph.targetX - telegraph.enemy.x, telegraph.targetY - telegraph.enemy.y);
+      telegraph.enemy.vx += chargeDir.x * 760;
+      telegraph.enemy.vy += chargeDir.y * 760;
+      spawnBurst(telegraph.enemy.x, telegraph.enemy.y, "#ff8c66", 16, 180);
+      playBossJumpSound();
+      ui.status.textContent = "Le boss part en charge.";
+    } else if (telegraph.type === "hazard") {
+      spawnHazard(telegraph.x, telegraph.y, telegraph.radius, 6, "toxic", "boss");
+      playHazardSound();
+      ui.status.textContent = "Zone toxique posee par le boss.";
+    }
+
+    return false;
   });
 }
 
@@ -1689,6 +2047,16 @@ function updateHazards(dt) {
     }
     return true;
   });
+}
+
+function updateDamageTexts(dt) {
+  world.damageTexts = world.damageTexts.filter((item) => {
+    item.life -= dt;
+    item.y += item.vy * dt;
+    item.vy *= Math.exp(-5.2 * dt);
+    return item.life > 0;
+  });
+  hitMarkerTimer = Math.max(0, hitMarkerTimer - dt);
 }
 
 function updateSpecialEvent(dt) {
@@ -1731,7 +2099,7 @@ function updateBullets(dt) {
     for (const entity of actors) {
       if (!entity || entity.hp <= 0 || entity.team === bullet.team) continue;
       if (length(entity.x - bullet.x, entity.y - bullet.y) <= entity.radius + bullet.radius) {
-        damageEntity(entity, bullet.damage, bullet.color, bullet.sourceArchetype);
+        damageEntity(entity, bullet.damage, bullet.color, bullet.sourceArchetype, bullet.team, bullet.weaponId);
         return false;
       }
     }
@@ -1786,8 +2154,10 @@ function updateGame(dt) {
   if (ally) updateBot(ally, dt);
   enemies.forEach((enemy) => updateBot(enemy, dt));
   updateBossPatterns(dt);
+  updateTelegraphs(dt);
   updateBullets(dt);
   updateParticles(dt);
+  updateDamageTexts(dt);
   updateApples(dt);
   updateSpecialEvent(dt);
   updateHazards(dt);
@@ -1851,28 +2221,17 @@ function roundRect(x, y, w, h, radius) {
 
 function drawBackground(camera) {
   const view = viewSize();
+  const map = currentMapSpec();
   const gradient = ctx.createLinearGradient(0, 0, 0, view.height);
-  if (world.theme === "ember") {
-    gradient.addColorStop(0, "#2c1610");
-    gradient.addColorStop(1, "#110a08");
-  } else if (world.theme === "toxic") {
-    gradient.addColorStop(0, "#0b2a1d");
-    gradient.addColorStop(1, "#08150f");
-  } else {
-    gradient.addColorStop(0, "#0f2430");
-    gradient.addColorStop(1, "#081119");
-  }
+  gradient.addColorStop(0, map.colors.sky);
+  gradient.addColorStop(1, map.colors.floor);
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, view.width, view.height);
 
   ctx.save();
   ctx.translate(-camera.x, -camera.y);
 
-  ctx.strokeStyle = world.theme === "ember"
-    ? "rgba(255,167,120,0.05)"
-    : world.theme === "toxic"
-      ? "rgba(145,255,135,0.05)"
-      : "rgba(255,255,255,0.04)";
+  ctx.strokeStyle = map.colors.line;
   ctx.lineWidth = 1;
   for (let x = 0; x <= arena.width; x += 120) {
     ctx.beginPath();
@@ -1884,6 +2243,54 @@ function drawBackground(camera) {
     ctx.beginPath();
     ctx.moveTo(0, y);
     ctx.lineTo(arena.width, y);
+    ctx.stroke();
+  }
+
+  if (map.id === "neon-docks") {
+    [210, 700, 1180].forEach((y) => {
+      ctx.fillStyle = "rgba(84,240,255,0.06)";
+      roundRect(120, y, arena.width - 240, 22, 16);
+      ctx.fill();
+    });
+  } else if (map.id === "ember-forge") {
+    ctx.strokeStyle = "rgba(255,164,84,0.18)";
+    ctx.lineWidth = 6;
+    ctx.setLineDash([28, 18]);
+    ctx.beginPath();
+    ctx.moveTo(180, arena.height - 250);
+    ctx.lineTo(arena.width - 180, arena.height - 250);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    [430, 1110, 1760].forEach((x) => {
+      ctx.fillStyle = "rgba(255,164,84,0.08)";
+      ctx.beginPath();
+      ctx.arc(x, 240, 84, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  } else if (map.id === "toxic-lab") {
+    ctx.fillStyle = "rgba(145,255,135,0.06)";
+    [340, 980, 1620].forEach((x, index) => {
+      ctx.beginPath();
+      ctx.arc(x, 260 + index * 280, 90, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.strokeStyle = "rgba(145,255,135,0.16)";
+    ctx.lineWidth = 4;
+    ctx.setLineDash([14, 10]);
+    ctx.beginPath();
+    ctx.moveTo(220, arena.height - 170);
+    ctx.lineTo(arena.width - 220, arena.height - 170);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  } else if (map.id === "mirror-core") {
+    ctx.fillStyle = "rgba(141,212,255,0.07)";
+    roundRect(arena.width / 2 - 80, 140, 160, arena.height - 280, 40);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(141,212,255,0.14)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(arena.width / 2, 100);
+    ctx.lineTo(arena.width / 2, arena.height - 100);
     ctx.stroke();
   }
 
@@ -1899,16 +2306,12 @@ function drawBackground(camera) {
 
   obstacles.forEach((rect) => {
     const blockGradient = ctx.createLinearGradient(rect.x, rect.y, rect.x + rect.w, rect.y + rect.h);
-    blockGradient.addColorStop(0, "rgba(29,52,66,0.95)");
-    blockGradient.addColorStop(1, "rgba(10,22,30,0.98)");
+    blockGradient.addColorStop(0, map.colors.obstacleA);
+    blockGradient.addColorStop(1, map.colors.obstacleB);
     ctx.fillStyle = blockGradient;
     roundRect(rect.x, rect.y, rect.w, rect.h, 24);
     ctx.fill();
-    ctx.strokeStyle = world.theme === "ember"
-      ? "rgba(255,164,84,0.18)"
-      : world.theme === "toxic"
-        ? "rgba(145,255,135,0.18)"
-        : "rgba(84,240,255,0.16)";
+    ctx.strokeStyle = map.colors.obstacleStroke;
     ctx.lineWidth = 2;
     ctx.stroke();
   });
@@ -1993,6 +2396,45 @@ function drawHazards(camera) {
   ctx.restore();
 }
 
+function drawTelegraphs(camera) {
+  ctx.save();
+  ctx.translate(-camera.x, -camera.y);
+  world.telegraphs.forEach((telegraph) => {
+    const progressRatio = 1 - telegraph.life / telegraph.maxLife;
+    const pulse = 1 + Math.sin(progressRatio * 18) * 0.08;
+    if (telegraph.type === "burst" || telegraph.type === "hazard") {
+      const color = telegraph.type === "hazard" ? "rgba(145,255,135,0.82)" : "rgba(255,189,89,0.9)";
+      const fill = telegraph.type === "hazard" ? "rgba(145,255,135,0.12)" : "rgba(255,189,89,0.1)";
+      ctx.fillStyle = fill;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(telegraph.x, telegraph.y, telegraph.radius * pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([12, 10]);
+      ctx.beginPath();
+      ctx.arc(telegraph.x, telegraph.y, telegraph.radius * 0.72 * pulse, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    } else if (telegraph.type === "charge") {
+      ctx.strokeStyle = "rgba(255,140,102,0.88)";
+      ctx.lineWidth = 5;
+      ctx.setLineDash([18, 12]);
+      ctx.beginPath();
+      ctx.moveTo(telegraph.enemy.x, telegraph.enemy.y);
+      ctx.lineTo(telegraph.targetX, telegraph.targetY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(255,140,102,0.18)";
+      ctx.beginPath();
+      ctx.arc(telegraph.targetX, telegraph.targetY, 34 + progressRatio * 24, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+  ctx.restore();
+}
+
 function drawParticles(camera) {
   ctx.save();
   ctx.translate(-camera.x, -camera.y);
@@ -2004,6 +2446,23 @@ function drawParticles(camera) {
     ctx.fill();
   });
   ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawDamageTexts(camera) {
+  ctx.save();
+  ctx.translate(-camera.x, -camera.y);
+  world.damageTexts.forEach((item) => {
+    ctx.globalAlpha = Math.max(0, item.life / item.maxLife);
+    ctx.fillStyle = item.color;
+    ctx.font = `${Math.round(18 * item.scale + 6)}px Rajdhani`;
+    ctx.textAlign = "center";
+    ctx.shadowBlur = 16;
+    ctx.shadowColor = item.color;
+    ctx.fillText(item.text, item.x, item.y);
+  });
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
   ctx.restore();
 }
 
@@ -2145,14 +2604,14 @@ function drawEntity(entity, camera) {
   ctx.translate(x, y);
   ctx.rotate(entity.angle);
 
-  ctx.shadowBlur = 22;
+  ctx.shadowBlur = entity.archetype === "boss" ? 34 : 22;
   ctx.shadowColor = glowColor;
   ctx.fillStyle = entity.team === "enemy" ? "rgba(255,95,125,0.18)" : "rgba(84,240,255,0.18)";
   ctx.beginPath();
-  ctx.arc(0, 0, entity.radius + 10, 0, Math.PI * 2);
+  ctx.arc(0, 0, entity.radius + (entity.archetype === "boss" ? 18 : 10), 0, Math.PI * 2);
   ctx.fill();
   ctx.strokeStyle = hexToRgba(entity.color, 0.35);
-  ctx.lineWidth = 3;
+  ctx.lineWidth = entity.archetype === "boss" ? 4 : 3;
   ctx.stroke();
   ctx.shadowBlur = 0;
 
@@ -2194,6 +2653,23 @@ function drawEntity(entity, camera) {
     ctx.stroke();
   }
 
+  if (entity.archetype === "boss") {
+    ctx.strokeStyle = "rgba(255,210,120,0.55)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, entity.radius + 7, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(255,209,102,0.92)";
+    ctx.beginPath();
+    ctx.moveTo(-12, -entity.radius - 12);
+    ctx.lineTo(-4, -entity.radius - 26);
+    ctx.lineTo(2, -entity.radius - 12);
+    ctx.lineTo(8, -entity.radius - 24);
+    ctx.lineTo(16, -entity.radius - 12);
+    ctx.closePath();
+    ctx.fill();
+  }
+
   ctx.restore();
 
   ctx.save();
@@ -2229,6 +2705,28 @@ function drawCrosshair() {
   ctx.restore();
 }
 
+function drawHitMarker() {
+  if (hitMarkerTimer <= 0 || overlayOpen || mobile.enabled) return;
+  ctx.save();
+  ctx.translate(pointer.x, pointer.y);
+  ctx.globalAlpha = Math.min(1, hitMarkerTimer / 0.16);
+  ctx.strokeStyle = hitMarkerColor;
+  ctx.lineWidth = 2.6;
+  const gap = 6;
+  const size = 16;
+  ctx.beginPath();
+  ctx.moveTo(-size, -size);
+  ctx.lineTo(-gap, -gap);
+  ctx.moveTo(size, -size);
+  ctx.lineTo(gap, -gap);
+  ctx.moveTo(-size, size);
+  ctx.lineTo(-gap, gap);
+  ctx.moveTo(size, size);
+  ctx.lineTo(gap, gap);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawToast() {
   if (levelToast <= 0) return;
   const view = viewSize();
@@ -2243,7 +2741,7 @@ function drawToast() {
   ctx.fillText(`Niveau ${world.level} - ${world.tier}`, view.width / 2, 64);
   ctx.fillStyle = "#e9f5ff";
   ctx.font = "600 16px Rajdhani";
-  ctx.fillText(`${currentModeLabel()} / ${currentWeaponLabel()}`, view.width / 2, 88);
+  ctx.fillText(`${world.mapName} / ${currentModeLabel()} / ${currentWeaponLabel()}`, view.width / 2, 88);
   ctx.restore();
 }
 
@@ -2367,6 +2865,7 @@ function updateAimFromTouch(touch) {
 function drawMinimap(camera) {
   const rect = minimapCanvas.getBoundingClientRect();
   if (!rect.width || !rect.height) return;
+  const map = currentMapSpec();
 
   minimapCtx.clearRect(0, 0, rect.width, rect.height);
 
@@ -2376,8 +2875,8 @@ function drawMinimap(camera) {
   const mapY = (y) => y * scaleY;
 
   const background = minimapCtx.createLinearGradient(0, 0, 0, rect.height);
-  background.addColorStop(0, "rgba(10, 28, 38, 0.94)");
-  background.addColorStop(1, "rgba(5, 14, 20, 0.98)");
+  background.addColorStop(0, map.colors.sky);
+  background.addColorStop(1, map.colors.floor);
   minimapCtx.fillStyle = background;
   minimapCtx.fillRect(0, 0, rect.width, rect.height);
 
@@ -2398,7 +2897,7 @@ function drawMinimap(camera) {
     minimapCtx.stroke();
   }
 
-  minimapCtx.fillStyle = "rgba(255,255,255,0.1)";
+  minimapCtx.fillStyle = map.colors.obstacleStroke;
   obstacles.forEach((obstacle) => {
     minimapCtx.fillRect(mapX(obstacle.x), mapY(obstacle.y), obstacle.w * scaleX, obstacle.h * scaleY);
   });
@@ -2447,6 +2946,12 @@ function cycleWeapon() {
   renderUI();
 }
 
+function toggleMinimap() {
+  minimapVisible = !minimapVisible;
+  ui.status.textContent = minimapVisible ? "Mini-carte activee." : "Mini-carte cachee.";
+  renderUI();
+}
+
 function render() {
   const view = viewSize();
   ctx.clearRect(0, 0, view.width, view.height);
@@ -2454,17 +2959,20 @@ function render() {
   const camera = getCamera();
   drawBackground(camera);
   drawHazards(camera);
+  drawTelegraphs(camera);
   drawApples(camera);
   drawParticles(camera);
   drawBullets(camera);
   drawEntity(player, camera);
   if (ally) drawEntity(ally, camera);
   enemies.forEach((enemy) => drawEntity(enemy, camera));
+  drawDamageTexts(camera);
   drawToast();
   drawDeath();
   drawPause();
   drawVignette();
   drawCrosshair();
+  drawHitMarker();
   drawMinimap(camera);
 }
 
@@ -2564,7 +3072,7 @@ function tick(timestamp) {
   if (gameStarted && !overlayOpen && !gameOver && !paused) {
     startAmbientMusic();
     updateAmbientMusic();
-  } else if (ambientNodes && (overlayOpen || gameOver)) {
+  } else if ((ambientNodes || (ambientLoopTrack && !ambientLoopTrack.paused)) && (overlayOpen || gameOver || paused)) {
     stopAmbientMusic();
   }
 
@@ -2590,6 +3098,12 @@ canvas.addEventListener("mousemove", (event) => {
 canvas.addEventListener("contextmenu", (event) => {
   event.preventDefault();
 });
+
+canvas.addEventListener("wheel", (event) => {
+  if (mobile.enabled || overlayOpen) return;
+  event.preventDefault();
+  cycleWeapon();
+}, { passive: false });
 
 canvas.addEventListener("mousedown", (event) => {
   if (event.button !== 0) return;
@@ -2618,6 +3132,27 @@ window.addEventListener("keydown", (event) => {
 
   keys.add(key);
 
+  if (key === "tab") {
+    event.preventDefault();
+    ensureAudio();
+    if (overlayOpen) closeOverlay();
+    else openOverlay("play");
+    return;
+  }
+
+  if (key === "f") {
+    event.preventDefault();
+    ensureAudio();
+    requestFullscreenSafe();
+    return;
+  }
+
+  if (key === "m") {
+    event.preventDefault();
+    toggleMinimap();
+    return;
+  }
+
   if (key === "escape") {
     event.preventDefault();
     if (overlayOpen) closeOverlay();
@@ -2635,7 +3170,7 @@ window.addEventListener("keydown", (event) => {
       playPauseSound();
     } else {
       startAmbientMusic();
-      ui.status.textContent = `Niveau ${world.level} - ${world.tier} - ${currentModeLabel()} - ${eventLabel(world.eventType)}.`;
+      ui.status.textContent = `Niveau ${world.level} - ${world.tier} - ${world.mapName} - ${eventLabel(world.eventType)}.`;
       playResumeSound();
     }
     return;
@@ -2663,7 +3198,7 @@ window.addEventListener("keydown", (event) => {
     return;
   }
 
-  if (key === bindingKey("dash")) {
+  if (key === bindingKey("dash") || code === "Space") {
     event.preventDefault();
     const moveX = (isPressed("right") ? 1 : 0) - (isPressed("left") ? 1 : 0);
     const moveY = (isPressed("backward") ? 1 : 0) - (isPressed("forward") ? 1 : 0);
@@ -2866,6 +3401,12 @@ ui.rotateDismissButton?.addEventListener("click", () => {
   syncMobileMode();
 });
 
+ui.tutorialDismissButton?.addEventListener("click", () => {
+  hints.mobileTwinStick = true;
+  saveHints();
+  renderUI();
+});
+
 ui.joystickShell.addEventListener("touchstart", (event) => {
   if (!mobile.enabled) return;
   event.preventDefault();
@@ -2877,7 +3418,7 @@ ui.joystickShell.addEventListener("touchstart", (event) => {
 }, { passive: false });
 
 canvas.addEventListener("touchstart", (event) => {
-  if (!mobile.enabled || overlayOpen) return;
+  if (mobile.enabled || overlayOpen) return;
   event.preventDefault();
   ensureAudio();
   tryAutoFullscreen();
@@ -2893,7 +3434,7 @@ canvas.addEventListener("touchstart", (event) => {
 }, { passive: false });
 
 canvas.addEventListener("touchmove", (event) => {
-  if (!mobile.enabled) return;
+  if (mobile.enabled) return;
   const touch = [...event.changedTouches].find((item) => item.identifier === mobile.fireTouchId);
   if (!touch) return;
   event.preventDefault();
