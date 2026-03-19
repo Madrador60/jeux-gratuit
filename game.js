@@ -128,7 +128,9 @@ const ui = {
   mobileUltraClean: document.getElementById("mobileUltraClean"),
   mobileHaptics: document.getElementById("mobileHaptics"),
   mobileButtonScale: document.getElementById("mobileButtonScale"),
-  mobileButtonScaleValue: document.getElementById("mobileButtonScaleValue")
+  mobileButtonScaleValue: document.getElementById("mobileButtonScaleValue"),
+  mobileAimSensitivity: document.getElementById("mobileAimSensitivity"),
+  mobileAimSensitivityValue: document.getElementById("mobileAimSensitivityValue")
 };
 
 const STORAGE_SETTINGS = "arena_fun_settings_v1";
@@ -336,6 +338,7 @@ const defaultSettings = {
   mobileUltraClean: false,
   mobileHaptics: true,
   mobileButtonScale: 100,
+  mobileAimSensitivity: 100,
   bindings: {
     forward: "z",
     backward: "s",
@@ -592,6 +595,7 @@ function sanitizeSettings() {
   settings.dashVolume = clamp(Number(settings.dashVolume) || defaultSettings.dashVolume, 0, 100);
   settings.restartDelay = clamp(Number(settings.restartDelay) || defaultSettings.restartDelay, 1, 5);
   settings.mobileButtonScale = clamp(Number(settings.mobileButtonScale) || defaultSettings.mobileButtonScale, 80, 150);
+  settings.mobileAimSensitivity = clamp(Number(settings.mobileAimSensitivity) || defaultSettings.mobileAimSensitivity, 60, 160);
   settings.fpsCap = [0, 60, 120, 144].includes(Number(settings.fpsCap)) ? Number(settings.fpsCap) : defaultSettings.fpsCap;
   progress.attackTier = clamp(Number(progress.attackTier) || 0, 0, 8);
   progress.vitalityTier = clamp(Number(progress.vitalityTier) || 0, 0, 8);
@@ -609,12 +613,14 @@ if (!localStorage.getItem(STORAGE_AUDIO_BOOST)) {
 }
 
 function createEntity(x, y, options = {}) {
+  const baseRadius = options.radius || 30;
   return {
     x,
     y,
     vx: 0,
     vy: 0,
-    radius: options.radius || 30,
+    radius: baseRadius,
+    hurtRadius: options.hurtRadius || baseRadius,
     angle: 0,
     hp: options.hp || 100,
     maxHp: options.hp || 100,
@@ -638,6 +644,10 @@ function createEntity(x, y, options = {}) {
     damageValue: options.damageValue || 8,
     reloadValue: options.reloadValue || weaponConfigs.rifle.reload
   };
+}
+
+function getHurtRadius(entity) {
+  return entity?.hurtRadius || entity?.radius || 0;
 }
 
 function currentModeLabel() {
@@ -978,7 +988,7 @@ function resetLevel(level, freshRun = false) {
   world.damageTexts = [];
 
   if (freshRun || !player) {
-    player = createEntity(420, 680, { color: settings.playerColor, skin: settings.skin, team: "ally" });
+    player = createEntity(420, 680, { color: settings.playerColor, skin: settings.skin, team: "ally", hurtRadius: 20 });
   } else {
     player.x = 420;
     player.y = 680;
@@ -1189,6 +1199,8 @@ function renderUI() {
   ui.mobileHaptics.checked = settings.mobileHaptics;
   ui.mobileButtonScale.value = String(settings.mobileButtonScale);
   ui.mobileButtonScaleValue.textContent = `${settings.mobileButtonScale}%`;
+  ui.mobileAimSensitivity.value = String(settings.mobileAimSensitivity);
+  ui.mobileAimSensitivityValue.textContent = `${settings.mobileAimSensitivity}%`;
 
   [
     ["attackTier", ui.upgradeAttackLevel, ui.upgradeAttackCost, ui.quickUpgradeAttackLevel, ui.quickUpgradeAttackCost, ui.upgradeAttack, ui.quickUpgradeAttack],
@@ -2098,7 +2110,7 @@ function updateBullets(dt) {
 
     for (const entity of actors) {
       if (!entity || entity.hp <= 0 || entity.team === bullet.team) continue;
-      if (length(entity.x - bullet.x, entity.y - bullet.y) <= entity.radius + bullet.radius) {
+      if (length(entity.x - bullet.x, entity.y - bullet.y) <= getHurtRadius(entity) + bullet.radius) {
         damageEntity(entity, bullet.damage, bullet.color, bullet.sourceArchetype, bullet.team, bullet.weaponId);
         return false;
       }
@@ -2840,8 +2852,9 @@ function updateVirtualPointerFromAim() {
   const playerScreenX = player.x - camera.x;
   const playerScreenY = player.y - camera.y;
   const aim = normalize(mobile.aimX, mobile.aimY);
-  pointer.x = playerScreenX + aim.x * 180;
-  pointer.y = playerScreenY + aim.y * 180;
+  const reach = 130 + ((settings.mobileAimSensitivity - 60) / 100) * 120;
+  pointer.x = playerScreenX + aim.x * reach;
+  pointer.y = playerScreenY + aim.y * reach;
   pointer.active = true;
 }
 
@@ -2851,13 +2864,14 @@ function updateAimFromTouch(touch) {
   const centerY = rect.top + rect.height / 2;
   const rawX = touch.clientX - centerX;
   const rawY = touch.clientY - centerY;
-  const maxRadius = rect.width * 0.28;
+  const sensitivityBoost = settings.mobileAimSensitivity / 100;
+  const maxRadius = rect.width * 0.24;
   const dist = Math.hypot(rawX, rawY) || 1;
   const ratio = dist > maxRadius ? maxRadius / dist : 1;
   const stickX = rawX * ratio;
   const stickY = rawY * ratio;
-  mobile.aimX = rawX;
-  mobile.aimY = rawY;
+  mobile.aimX = stickX * sensitivityBoost;
+  mobile.aimY = stickY * sensitivityBoost;
   ui.aimStick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
   updateVirtualPointerFromAim();
 }
@@ -3345,6 +3359,12 @@ ui.mobileHaptics.addEventListener("change", () => {
 
 ui.mobileButtonScale.addEventListener("input", () => {
   settings.mobileButtonScale = Number(ui.mobileButtonScale.value);
+  saveSettings();
+  renderUI();
+});
+
+ui.mobileAimSensitivity.addEventListener("input", () => {
+  settings.mobileAimSensitivity = Number(ui.mobileAimSensitivity.value);
   saveSettings();
   renderUI();
 });
