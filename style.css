@@ -1452,7 +1452,7 @@ body.mobile-ui-active {
   }
 
   .aim-pad {
-    display: none;
+    display: block;
   }
 
   .mobile-controls.mobile-modern {
@@ -1597,7 +1597,7 @@ body.mobile-ui-active {
   }
 
   body.iphone-ui.mobile-ui-active .aim-pad {
-    display: none;
+    display: block;
   }
 
   body.iphone-ui.mobile-ui-active .joystick-shell {

@@ -27,6 +27,8 @@ const ui = {
   mobileControls: document.getElementById("mobileControls"),
   joystickShell: document.getElementById("joystickShell"),
   joystickStick: document.getElementById("joystickStick"),
+  aimPad: document.getElementById("aimPad"),
+  aimStick: document.getElementById("aimStick"),
   mobileDashButton: document.getElementById("mobileDashButton"),
   mobileWeaponButton: document.getElementById("mobileWeaponButton"),
   mobileMenuButton: document.getElementById("mobileMenuButton"),
@@ -214,8 +216,11 @@ const mobile = {
   enabled: false,
   moveTouchId: null,
   fireTouchId: null,
+  aimTouchId: null,
   moveX: 0,
-  moveY: 0
+  moveY: 0,
+  aimX: 1,
+  aimY: 0
 };
 const skinImages = {};
 Object.entries(skinCatalog).forEach(([id, entry]) => {
@@ -477,11 +482,17 @@ function currentMoodLabel() {
 function resetMobileInputs() {
   mobile.moveTouchId = null;
   mobile.fireTouchId = null;
+  mobile.aimTouchId = null;
   mobile.moveX = 0;
   mobile.moveY = 0;
+  mobile.aimX = 1;
+  mobile.aimY = 0;
   pointer.down = false;
   pointer.active = false;
   ui.joystickStick.style.transform = "translate(-50%, -50%)";
+  if (ui.aimStick) {
+    ui.aimStick.style.transform = "translate(-50%, -50%)";
+  }
 }
 
 function playerPowerLabel() {
@@ -2325,6 +2336,34 @@ function updatePointerFromTouch(touch) {
   return screenToWorld(pointer.x, pointer.y);
 }
 
+function updateVirtualPointerFromAim() {
+  if (!player) return;
+  const camera = getCamera();
+  const playerScreenX = player.x - camera.x;
+  const playerScreenY = player.y - camera.y;
+  const aim = normalize(mobile.aimX, mobile.aimY);
+  pointer.x = playerScreenX + aim.x * 180;
+  pointer.y = playerScreenY + aim.y * 180;
+  pointer.active = true;
+}
+
+function updateAimFromTouch(touch) {
+  const rect = ui.aimPad.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const rawX = touch.clientX - centerX;
+  const rawY = touch.clientY - centerY;
+  const maxRadius = rect.width * 0.28;
+  const dist = Math.hypot(rawX, rawY) || 1;
+  const ratio = dist > maxRadius ? maxRadius / dist : 1;
+  const stickX = rawX * ratio;
+  const stickY = rawY * ratio;
+  mobile.aimX = rawX;
+  mobile.aimY = rawY;
+  ui.aimStick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
+  updateVirtualPointerFromAim();
+}
+
 function drawMinimap(camera) {
   const rect = minimapCanvas.getBoundingClientRect();
   if (!rect.width || !rect.height) return;
@@ -2865,14 +2904,24 @@ canvas.addEventListener("touchend", (event) => {
   const touch = [...event.changedTouches].find((item) => item.identifier === mobile.fireTouchId);
   if (!touch) return;
   mobile.fireTouchId = null;
-  pointer.down = false;
-  pointer.active = false;
+  if (mobile.aimTouchId === null) {
+    pointer.down = false;
+    pointer.active = false;
+  } else {
+    pointer.down = true;
+    updateVirtualPointerFromAim();
+  }
 }, { passive: false });
 
 canvas.addEventListener("touchcancel", () => {
   mobile.fireTouchId = null;
-  pointer.down = false;
-  pointer.active = false;
+  if (mobile.aimTouchId === null) {
+    pointer.down = false;
+    pointer.active = false;
+  } else {
+    pointer.down = true;
+    updateVirtualPointerFromAim();
+  }
 }, { passive: false });
 
 ui.joystickShell.addEventListener("touchmove", (event) => {
@@ -2892,6 +2941,45 @@ ui.joystickShell.addEventListener("touchend", (event) => {
 ui.joystickShell.addEventListener("touchcancel", () => {
   mobile.moveTouchId = null;
   resetJoystick();
+}, { passive: false });
+
+ui.aimPad.addEventListener("touchstart", (event) => {
+  if (!mobile.enabled) return;
+  event.preventDefault();
+  const touch = event.changedTouches[0];
+  if (!touch) return;
+  mobile.aimTouchId = touch.identifier;
+  updateAimFromTouch(touch);
+  pointer.down = true;
+  ensureAudio();
+  tryAutoFullscreen();
+}, { passive: false });
+
+ui.aimPad.addEventListener("touchmove", (event) => {
+  const touch = [...event.changedTouches].find((item) => item.identifier === mobile.aimTouchId);
+  if (!touch) return;
+  event.preventDefault();
+  updateAimFromTouch(touch);
+}, { passive: false });
+
+ui.aimPad.addEventListener("touchend", (event) => {
+  const touch = [...event.changedTouches].find((item) => item.identifier === mobile.aimTouchId);
+  if (!touch) return;
+  mobile.aimTouchId = null;
+  ui.aimStick.style.transform = "translate(-50%, -50%)";
+  if (mobile.fireTouchId === null) {
+    pointer.down = false;
+    pointer.active = false;
+  }
+}, { passive: false });
+
+ui.aimPad.addEventListener("touchcancel", () => {
+  mobile.aimTouchId = null;
+  ui.aimStick.style.transform = "translate(-50%, -50%)";
+  if (mobile.fireTouchId === null) {
+    pointer.down = false;
+    pointer.active = false;
+  }
 }, { passive: false });
 
 document.addEventListener("touchmove", (event) => {
