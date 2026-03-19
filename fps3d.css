@@ -1,0 +1,307 @@
+:root {
+  --bg: #050709;
+  --panel: rgba(6, 11, 16, 0.74);
+  --line: rgba(255, 255, 255, 0.09);
+  --text: #edf7ff;
+  --muted: #9cb5c5;
+  --cyan: #67ecff;
+  --gold: #ffd57d;
+  --lava: #ff6f3b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top, rgba(255, 120, 66, 0.2), transparent 28%),
+    linear-gradient(180deg, #0b1015 0%, #040607 100%);
+  color: var(--text);
+  font-family: "Rajdhani", sans-serif;
+}
+
+body {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.fps-app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#fps3dCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.fps-topbar {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  left: max(14px, env(safe-area-inset-left));
+  right: max(14px, env(safe-area-inset-right));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.fps-pill,
+.hud-card,
+.intro-card,
+.fps-button {
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.fps-pill {
+  display: inline-flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+    var(--panel);
+  pointer-events: auto;
+}
+
+.fps-pill span {
+  color: var(--muted);
+}
+
+.fps-button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 18px;
+  color: var(--text);
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.08);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.fps-button.primary {
+  color: #050709;
+  border-color: rgba(255, 210, 122, 0.55);
+  background: linear-gradient(135deg, var(--gold), var(--lava));
+}
+
+.fps-button.subtle:hover,
+.fps-button.primary:hover {
+  filter: brightness(1.08);
+}
+
+.crosshair {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 38px;
+  height: 38px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.88);
+  z-index: 9;
+  pointer-events: none;
+  box-shadow: 0 0 28px rgba(103, 236, 255, 0.18);
+}
+
+.crosshair::before,
+.crosshair::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: rgba(255, 255, 255, 0.88);
+  transform: translate(-50%, -50%);
+}
+
+.crosshair::before {
+  width: 2px;
+  height: 58px;
+}
+
+.crosshair::after {
+  width: 58px;
+  height: 2px;
+}
+
+.fps-hud-left,
+.fps-hud-right {
+  position: fixed;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 11;
+  pointer-events: none;
+}
+
+.fps-hud-left {
+  left: max(16px, env(safe-area-inset-left));
+  max-width: 310px;
+}
+
+.fps-hud-right {
+  right: max(16px, env(safe-area-inset-right));
+  max-width: 260px;
+}
+
+.hud-card {
+  padding: 14px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(circle at top left, rgba(255, 118, 70, 0.12), transparent 38%),
+    var(--panel);
+}
+
+.hud-card.compact {
+  text-align: right;
+}
+
+.hud-card strong,
+.intro-card h1,
+.intro-card h2 {
+  display: block;
+  margin: 0;
+}
+
+.hud-card p,
+.intro-card p,
+.intro-card span {
+  margin: 0;
+  color: var(--muted);
+}
+
+.hud-label,
+.eyebrow {
+  display: inline-flex;
+  margin-bottom: 6px;
+  color: var(--cyan);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.fps-intro,
+.fps-gameover {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(3, 7, 10, 0.66);
+  z-index: 20;
+}
+
+.intro-card {
+  width: min(760px, 100%);
+  padding: 26px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    radial-gradient(circle at top left, rgba(255, 118, 70, 0.18), transparent 34%),
+    linear-gradient(180deg, rgba(8, 14, 20, 0.96), rgba(6, 10, 14, 0.92));
+}
+
+.intro-card.small {
+  width: min(460px, 100%);
+}
+
+.intro-card h1 {
+  font-size: clamp(2rem, 6vw, 3.35rem);
+  line-height: 0.94;
+  margin-bottom: 10px;
+}
+
+.intro-card h2 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.intro-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.intro-grid > div {
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.intro-grid strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.intro-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+body.locked .fps-intro {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .fps-topbar {
+    gap: 8px;
+  }
+
+  .fps-pill,
+  .fps-button {
+    padding: 8px 12px;
+  }
+
+  .fps-hud-left,
+  .fps-hud-right {
+    max-width: none;
+  }
+
+  .intro-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (pointer: coarse) {
+  .fps-hud-left,
+  .fps-hud-right {
+    display: none;
+  }
+
+  .crosshair {
+    opacity: 0.4;
+  }
+}

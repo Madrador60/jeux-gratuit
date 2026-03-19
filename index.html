@@ -34,7 +34,7 @@
         <div class="pill"><span>Niveau</span><strong id="levelLabel">1</strong></div>
         <div class="pill"><span>Record</span><strong id="bestLevel">1</strong></div>
         <div class="pill"><span>Mode</span><strong id="modeLabel">NIVEAUX</strong></div>
-        <div class="pill"><span>Arme</span><strong id="weaponLabel">RIFLE</strong></div>
+        <div class="pill"><span>Arme</span><strong id="weaponLabel">FUSIL</strong></div>
         <div class="pill"><span>Pieces</span><strong id="coinsLabel">0</strong></div>
         <div class="pill"><span>Puissance</span><strong id="powerLabel">1</strong></div>
         <div class="pill"><span>Bouclier</span><strong id="shieldLabel">0.0s</strong></div>
@@ -58,11 +58,17 @@
         </div>
       </div>
 
+      <div class="combat-banner hidden" id="combatBanner" aria-hidden="true">
+        <span class="combat-banner-tag" id="combatBannerTag">Arene</span>
+        <strong id="combatBannerTitle">Pret</strong>
+        <small id="combatBannerText">Faites chauffer l'arene.</small>
+      </div>
+
       <div class="mobile-controls mobile-modern" id="mobileControls" aria-hidden="true">
         <div class="mobile-top-strip">
           <div class="mobile-badge"><span>Niv</span><strong id="mobileLevelLabel">1</strong></div>
           <div class="mobile-badge"><span>Mode</span><strong id="mobileModeLabel">NIVEAUX</strong></div>
-          <div class="mobile-badge"><span>Arme</span><strong id="mobileWeaponLabel">RIFLE</strong></div>
+          <div class="mobile-badge"><span>Arme</span><strong id="mobileWeaponLabel">FUSIL</strong></div>
           <div class="mobile-badge"><span>Pieces</span><strong id="mobileCoinsLabel">0</strong></div>
           <button class="mobile-float-button" id="mobileFullscreenButton" type="button">Plein ecran</button>
         </div>
@@ -80,7 +86,7 @@
             <div class="aim-reticle"></div>
             <div class="aim-stick" id="aimStick"></div>
           </div>
-          <p class="mobile-label">Viser / Tirer</p>
+          <p class="mobile-label">Viser / tirer</p>
           <div class="mobile-buttons">
             <button class="mobile-button dash" id="mobileDashButton" type="button">Dash</button>
             <button class="mobile-button weapon" id="mobileWeaponButton" type="button">Arme</button>
@@ -117,15 +123,15 @@
           <div class="bar"><div id="playerEnergy" class="fill energy"></div></div>
         </div>
         <div class="stat">
-          <span>Enemy 1</span>
+          <span id="enemyLabel">Ennemi 1</span>
           <div class="bar"><div id="enemyHp" class="fill enemy"></div></div>
         </div>
         <div class="stat hidden" id="allyStat">
-          <span>Allie</span>
+          <span id="allyLabel">Allie</span>
           <div class="bar"><div id="allyHp" class="fill ally"></div></div>
         </div>
         <div class="stat hidden" id="enemyTwoStat">
-          <span>Enemy 2</span>
+          <span id="enemyTwoLabel">Ennemi 2</span>
           <div class="bar"><div id="enemyTwoHp" class="fill enemy2"></div></div>
         </div>
         <p class="status" id="statusText">Appuyez sur Jouer pour lancer la partie.</p>
@@ -138,7 +144,7 @@
     <div class="hub-card">
       <div class="hub-head">
         <div>
-          <p class="eyebrow">Hub</p>
+          <p class="eyebrow">Menu</p>
           <h2>Le coin du chaos</h2>
         </div>
         <div class="hub-actions">
@@ -149,6 +155,7 @@
       <nav class="hub-tabs">
         <button class="tab-button active" type="button" data-tab="play">Jouer</button>
         <button class="tab-button" type="button" data-tab="shop">Boutique</button>
+        <button class="tab-button" type="button" data-tab="weapons">Armes</button>
         <button class="tab-button" type="button" data-tab="skins">Skins</button>
         <button class="tab-button" type="button" data-tab="settings">Parametres</button>
       </nav>
@@ -165,16 +172,26 @@
             <strong>Ameliorations</strong>
             <small>Depensez vos pieces plus facilement.</small>
           </button>
+          <button class="menu-card home-tile" type="button" data-open-tab="weapons">
+            <span class="eyebrow">Armes</span>
+            <strong>Arsenal</strong>
+            <small>Achetez et equipez vos armes preferees.</small>
+          </button>
           <button class="menu-card home-tile" type="button" data-open-tab="skins">
             <span class="eyebrow">Skins</span>
             <strong>Changer de style</strong>
-            <small>Choisissez votre look et votre couleur.</small>
+            <small>Choisissez votre style et votre couleur.</small>
           </button>
           <button class="menu-card home-tile" type="button" data-open-tab="settings">
             <span class="eyebrow">Parametres</span>
             <strong>Reglages</strong>
             <small>Audio, commandes, records et mobile.</small>
           </button>
+          <a class="menu-card home-tile home-link home-3d" href="fps3d.html" target="_blank" rel="noreferrer">
+            <span class="eyebrow">Mode 3D</span>
+            <strong>Premiere personne</strong>
+            <small>Essayez une arene volcanique en vue FPS.</small>
+          </a>
         </div>
 
         <div class="grid-two">
@@ -183,8 +200,9 @@
             <div class="choice-row">
               <button class="menu-choice active" type="button" data-interface="pc">PC</button>
               <button class="menu-choice" type="button" data-interface="mobile">Mobile</button>
+              <button class="menu-choice" type="button" data-interface="fps3d">3D FPS</button>
             </div>
-            <p class="hint">Choisissez l'interface a afficher. PC pour clavier/souris, Mobile pour boutons tactiles.</p>
+            <p class="hint">Choisissez l'interface a afficher. PC pour clavier/souris, Mobile pour boutons tactiles. `3D FPS` ouvre la version premiere personne.</p>
           </div>
 
           <div class="menu-card">
@@ -193,19 +211,31 @@
               <button class="menu-choice active" type="button" data-mode="levels">Niveaux</button>
               <button class="menu-choice" type="button" data-mode="duo">2v2 assist</button>
               <button class="menu-choice" type="button" data-mode="chaos">Chaos</button>
-              <button class="menu-choice" type="button" data-mode="swarm">Swarm</button>
-              <button class="menu-choice" type="button" data-mode="bossrush">Boss rush</button>
+              <button class="menu-choice" type="button" data-mode="swarm">Meute</button>
+              <button class="menu-choice" type="button" data-mode="bossrush">Ruee boss</button>
             </div>
-            <p class="hint">`Niveaux` progresse a l'infini. `2v2` ajoute un allie. `Chaos`, `Swarm` et `Boss rush` mettent beaucoup plus de pression.</p>
+            <p class="hint">`Niveaux` progresse a l'infini. `2v2` ajoute un allie. `Chaos`, `Meute` et `Ruee boss` mettent beaucoup plus de pression.</p>
           </div>
 
           <div class="menu-card">
             <h3>Arme</h3>
             <div class="choice-row" id="weaponChoices">
-              <button class="menu-choice active" type="button" data-weapon="rifle">Rifle</button>
-              <button class="menu-choice" type="button" data-weapon="shotgun">Shotgun</button>
+              <button class="menu-choice active" type="button" data-weapon="rifle">Fusil</button>
+              <button class="menu-choice" type="button" data-weapon="shotgun">Pompe</button>
               <button class="menu-choice" type="button" data-weapon="sniper">Sniper</button>
               <button class="menu-choice" type="button" data-weapon="burst">Rafale</button>
+            </div>
+            <div class="weapon-panel" id="weaponPanel">
+              <div class="weapon-panel-head">
+                <span class="weapon-panel-tag" id="weaponPerkTag">Stable</span>
+                <strong id="weaponPerkTitle">FUSIL</strong>
+              </div>
+              <p id="weaponPerkDesc">Laser propre pour tenir la pression et garder un bon rythme.</p>
+              <div class="weapon-mini-stats">
+                <span id="weaponStatOne">Portee haute</span>
+                <span id="weaponStatTwo">Precision</span>
+                <span id="weaponStatThree">Duel</span>
+              </div>
             </div>
             <p class="hint">`&`, `é`, `"` et `'` changent aussi l'arme sur PC. La molette souris les fait tourner encore plus vite.</p>
           </div>
@@ -290,6 +320,29 @@
         </div>
       </section>
 
+      <section class="tab-panel" data-panel="weapons">
+        <div class="shop-summary">
+          <div class="setting stat-tile">
+            <span>Pieces dispo</span>
+            <strong id="weaponShopCoinsTotal">0</strong>
+          </div>
+          <div class="setting stat-tile">
+            <span>Arme equipee</span>
+            <strong id="weaponShopEquipped">FUSIL</strong>
+          </div>
+          <div class="setting stat-tile">
+            <span>Armes possedees</span>
+            <strong id="weaponShopOwnedCount">1</strong>
+          </div>
+        </div>
+
+        <div class="menu-card shop-card">
+          <h3>Arsenal</h3>
+          <p class="hint" id="weaponShopHint">Achetez vos armes ici puis equipez-les quand vous voulez.</p>
+          <div id="weaponShopGrid" class="shop-grid weapon-shop-grid"></div>
+        </div>
+      </section>
+
       <section class="tab-panel" data-panel="skins">
         <div class="grid-two">
           <label class="setting">
@@ -304,8 +357,12 @@
               <div id="skinPreview" class="skin-preview-core"></div>
             </div>
             <div class="skin-spotlight">
-              <strong id="skinSpotlightName">Core</strong>
+              <strong id="skinSpotlightName">Tank</strong>
               <span id="skinSpotlightTag">Classique nerveux</span>
+            </div>
+            <div class="weapon-mini-shell">
+              <span>Petit arsenal</span>
+              <div id="skinWeaponMiniGrid" class="weapon-mini-grid"></div>
             </div>
           </div>
         </div>
@@ -357,10 +414,10 @@
             </div>
             <div class="record-lines">
               <p><span>Skin equipe:</span> <strong id="recordCurrentSkin">Tank</strong></p>
-              <p><span>Arme favorite du moment:</span> <strong id="recordCurrentWeapon">RIFLE</strong></p>
+              <p><span>Arme favorite du moment:</span> <strong id="recordCurrentWeapon">FUSIL</strong></p>
               <p><span>Mode choisi:</span> <strong id="recordCurrentMode">NIVEAUX</strong></p>
               <p><span>Ambiance:</span> <strong id="recordMood">Arena nerveuse deluxe</strong></p>
-              <p><span>Arme la plus jouee:</span> <strong id="recordFavoriteWeapon">RIFLE</strong></p>
+              <p><span>Arme la plus jouee:</span> <strong id="recordFavoriteWeapon">FUSIL</strong></p>
             </div>
           </div>
 
@@ -374,7 +431,7 @@
               </label>
 
               <label class="setting">
-                <span>Volume dash</span>
+                <span>Volume du dash</span>
                 <input id="dashVolume" type="range" min="0" max="100" step="1">
                 <strong id="dashVolumeValue">100%</strong>
               </label>
@@ -400,7 +457,7 @@
               </label>
 
               <label class="setting">
-                <span>Delai restart</span>
+                <span>Delai recommencer</span>
                 <input id="restartDelay" type="range" min="1" max="5" step="1">
                 <strong id="restartDelayValue">2 s</strong>
               </label>
@@ -416,7 +473,7 @@
             <button class="bind-button" type="button" data-action="right">Droite: <strong id="bindRight">D</strong></button>
             <button class="bind-button" type="button" data-action="dash">Dash: <strong id="bindDash">SHIFT</strong></button>
             <button class="bind-button" type="button" data-action="pause">Pause: <strong id="bindPause">P</strong></button>
-            <button class="bind-button" type="button" data-action="restart">Restart: <strong id="bindRestart">R</strong></button>
+            <button class="bind-button" type="button" data-action="restart">Recommencer: <strong id="bindRestart">R</strong></button>
           </div>
           <p class="hint" id="bindingHint">Cliquez sur une touche puis appuyez sur la nouvelle touche.</p>
           </div>
@@ -446,13 +503,15 @@
                 <strong id="mobileAimSensitivityValue">100%</strong>
               </label>
             </div>
-            <p class="hint">Joystick gauche pour bouger. Joystick droit pour viser et tirer. Reglez aussi la sensibilite si la visee bouge trop vite ou pas assez.</p>
+            <p class="hint">Joystick gauche pour bouger. Joystick droit pour viser et tirer. Reglez la sensibilite si la visee bouge trop vite ou pas assez.</p>
           </div>
         </div>
       </section>
     </div>
   </section>
 
+  <script src="game-data.js"></script>
+  <script src="game-storage.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

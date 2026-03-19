@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Arena 1v1 Infinite Deluxe 3D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="fps3d.css">
+</head>
+<body>
+  <div class="fps-app" id="fpsApp">
+    <canvas id="fps3dCanvas" tabindex="0" aria-label="Arene volcanique 3D"></canvas>
+
+    <header class="fps-topbar">
+      <div class="fps-pill"><span>Mode</span><strong>FPS 3D</strong></div>
+      <div class="fps-pill"><span>Vie</span><strong id="fpsHp">100</strong></div>
+      <div class="fps-pill"><span>Score</span><strong id="fpsScore">0</strong></div>
+      <div class="fps-pill"><span>Cibles</span><strong id="fpsTargets">0</strong></div>
+      <div class="fps-pill"><span>FPS</span><strong id="fpsFrame">0</strong></div>
+      <button class="fps-button subtle" id="fpsFullscreenButton" type="button">Plein ecran</button>
+      <a class="fps-button subtle" href="index.html">Retour 2D</a>
+    </header>
+
+    <div class="crosshair" aria-hidden="true"></div>
+
+    <section class="fps-hud-left">
+      <div class="hud-card">
+        <span class="hud-label">Objectif</span>
+        <strong>Survivez dans la forge</strong>
+        <p>Tirez sur les drones, evitez la lave et restez mobile dans l'arene.</p>
+      </div>
+      <div class="hud-card">
+        <span class="hud-label">Touches</span>
+        <p><strong>ZQSD / WASD</strong> bouger</p>
+        <p><strong>Souris</strong> viser</p>
+        <p><strong>Clic gauche</strong> tirer</p>
+        <p><strong>Shift</strong> sprinter</p>
+        <p><strong>R</strong> recommencer</p>
+      </div>
+    </section>
+
+    <section class="fps-hud-right">
+      <div class="hud-card compact">
+        <span class="hud-label">Arene</span>
+        <strong id="fpsZone">Forge rouge</strong>
+        <p id="fpsHint">Cliquez dans la scene pour entrer et activer le plein ecran.</p>
+      </div>
+    </section>
+
+    <section class="fps-intro" id="fpsIntro">
+      <div class="intro-card">
+        <p class="eyebrow">Mode 3D</p>
+        <h1>Forge rouge premiere personne</h1>
+        <p>Une version FPS separee du jeu principal, avec lave, falaises noires et drones hostiles.</p>
+        <div class="intro-grid">
+          <div>
+            <strong>Entree immersive</strong>
+            <span>Cliquez sur Jouer pour activer la souris et tenter le plein ecran.</span>
+          </div>
+          <div>
+            <strong>Vrai terrain volcanique</strong>
+            <span>Plateformes de basalte, rivieres de lave et ambiance braise.</span>
+          </div>
+        </div>
+        <div class="intro-actions">
+          <button class="fps-button primary" id="fpsEnterButton" type="button">Jouer en 3D</button>
+          <a class="fps-button subtle" href="index.html">Retour au jeu 2D</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="fps-gameover hidden" id="fpsGameOver">
+      <div class="intro-card small">
+        <p class="eyebrow">KO</p>
+        <h2>La forge vous a mange</h2>
+        <p id="fpsGameOverText">Reprenez votre souffle et repartez.</p>
+        <div class="intro-actions">
+          <button class="fps-button primary" id="fpsRestartButton" type="button">Rejouer</button>
+          <a class="fps-button subtle" href="index.html">Retour 2D</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.min.js"></script>
+  <script src="fps3d.js" defer></script>
+</body>
+</html>
