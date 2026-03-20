@@ -12,31 +12,73 @@
 <body>
   <div class="fps-app" id="fpsApp">
     <canvas id="fps3dCanvas" tabindex="0" aria-label="Arene volcanique 3D"></canvas>
+    <div class="fps-vignette" id="fpsVignette" aria-hidden="true"></div>
 
     <header class="fps-topbar">
       <div class="fps-pill"><span>Mode</span><strong>FPS 3D</strong></div>
+      <div class="fps-pill"><span>Vague</span><strong id="fpsWave">1</strong></div>
+      <div class="fps-pill"><span>Menace</span><strong id="fpsThreat">BASSE</strong></div>
       <div class="fps-pill"><span>Vie</span><strong id="fpsHp">100</strong></div>
       <div class="fps-pill"><span>Score</span><strong id="fpsScore">0</strong></div>
       <div class="fps-pill"><span>Cibles</span><strong id="fpsTargets">0</strong></div>
+      <div class="fps-pill"><span>Arme</span><strong id="fpsWeapon">PULSE</strong></div>
+      <div class="fps-pill"><span>Combo</span><strong id="fpsCombo">x0</strong></div>
+      <div class="fps-pill"><span>Boost</span><strong id="fpsBoost">AUCUN</strong></div>
+      <div class="fps-pill"><span>Evenement</span><strong id="fpsEvent">STANDARD</strong></div>
       <div class="fps-pill"><span>FPS</span><strong id="fpsFrame">0</strong></div>
       <button class="fps-button subtle" id="fpsFullscreenButton" type="button">Plein ecran</button>
       <a class="fps-button subtle" href="index.html">Retour 2D</a>
     </header>
 
-    <div class="crosshair" aria-hidden="true"></div>
+    <section class="fps-bossbar hidden" id="fpsBossBar" aria-hidden="true">
+      <div class="bossbar-head">
+        <span class="eyebrow">Boss</span>
+        <strong id="fpsBossName">Boss braise</strong>
+        <small id="fpsBossHpText">100%</small>
+      </div>
+      <div class="bossbar-track">
+        <div class="bossbar-fill" id="fpsBossFill"></div>
+      </div>
+    </section>
+
+    <section class="fps-moment hidden" id="fpsMoment" aria-hidden="true">
+      <span class="fps-moment-tag" id="fpsMomentTag">Arene</span>
+      <strong id="fpsMomentTitle">Forge Omega</strong>
+      <small id="fpsMomentText">Tenez la ligne et maintenez la pression.</small>
+    </section>
+
+    <div class="crosshair" id="fpsCrosshair" aria-hidden="true">
+      <span class="crosshair-ring"></span>
+      <span class="crosshair-dot"></span>
+      <span class="crosshair-line top"></span>
+      <span class="crosshair-line right"></span>
+      <span class="crosshair-line bottom"></span>
+      <span class="crosshair-line left"></span>
+    </div>
+
+    <section class="fps-loading" id="fpsLoading" aria-live="polite">
+      <div class="intro-card small">
+        <p class="eyebrow">Chargement 3D</p>
+        <h2>Preparation de l'arene</h2>
+        <p id="fpsLoadingText">Initialisation du mode FPS...</p>
+      </div>
+    </section>
 
     <section class="fps-hud-left">
       <div class="hud-card">
         <span class="hud-label">Objectif</span>
-        <strong>Survivez dans la forge</strong>
-        <p>Tirez sur les drones, evitez la lave et restez mobile dans l'arene.</p>
+        <strong id="fpsObjective">Survivez a la forge</strong>
+        <p id="fpsObjectiveText">Tirez sur les drones, evitez la lave et restez mobile dans l'arene.</p>
       </div>
       <div class="hud-card">
         <span class="hud-label">Touches</span>
         <p><strong>ZQSD / WASD</strong> bouger</p>
         <p><strong>Souris</strong> viser</p>
         <p><strong>Clic gauche</strong> tirer</p>
-        <p><strong>Shift</strong> sprinter</p>
+        <p><strong>Shift</strong> sprint</p>
+        <p><strong>Espace</strong> dash</p>
+        <p><strong>Molette / 1-7</strong> changer d'arme</p>
+        <p><strong>F</strong> plein ecran</p>
         <p><strong>R</strong> recommencer</p>
       </div>
     </section>
@@ -44,28 +86,41 @@
     <section class="fps-hud-right">
       <div class="hud-card compact">
         <span class="hud-label">Arene</span>
-        <strong id="fpsZone">Forge rouge</strong>
+        <strong id="fpsZone">Forge Omega</strong>
         <p id="fpsHint">Cliquez dans la scene pour entrer et activer le plein ecran.</p>
+      </div>
+      <div class="hud-card compact">
+        <span class="hud-label">Boss</span>
+        <strong id="fpsBossState">Aucun</strong>
+        <p id="fpsArenaFlavor">Lave vive, drones hostiles et lumiere volcanique.</p>
       </div>
     </section>
 
-    <section class="fps-intro" id="fpsIntro">
+    <section class="fps-intro hidden" id="fpsIntro">
       <div class="intro-card">
         <p class="eyebrow">Mode 3D</p>
-        <h1>Forge rouge premiere personne</h1>
-        <p>Une version FPS separee du jeu principal, avec lave, falaises noires et drones hostiles.</p>
+        <h1>Forge Omega premiere personne</h1>
+        <p>Un vrai mini mode FPS avec arene volcanique, drones ennemis, vagues montantes et boss braise.</p>
         <div class="intro-grid">
           <div>
             <strong>Entree immersive</strong>
-            <span>Cliquez sur Jouer pour activer la souris et tenter le plein ecran.</span>
+            <span>Cliquez sur Jouer pour activer la souris, tenter le plein ecran et entrer dans l'arene.</span>
           </div>
           <div>
-            <strong>Vrai terrain volcanique</strong>
-            <span>Plateformes de basalte, rivieres de lave et ambiance braise.</span>
+            <strong>Combat plus pro</strong>
+            <span>Crosshair vivant, vagues, drones differents, lave lisible et vraie montee de pression.</span>
+          </div>
+          <div>
+            <strong>Arene volcanique</strong>
+            <span>Falaises noires, rivieres de lave, ponts de basalte et lumiere chaude.</span>
+          </div>
+          <div>
+            <strong>Difficulte dynamique</strong>
+            <span>Plus vous survivez, plus les drones changent et deviennent agressifs.</span>
           </div>
         </div>
         <div class="intro-actions">
-          <button class="fps-button primary" id="fpsEnterButton" type="button">Jouer en 3D</button>
+          <button class="fps-button primary" id="fpsEnterButton" type="button" disabled>Jouer en 3D</button>
           <a class="fps-button subtle" href="index.html">Retour au jeu 2D</a>
         </div>
       </div>
@@ -74,8 +129,13 @@
     <section class="fps-gameover hidden" id="fpsGameOver">
       <div class="intro-card small">
         <p class="eyebrow">KO</p>
-        <h2>La forge vous a mange</h2>
+        <h2 id="fpsGameOverTitle">La forge vous a mange</h2>
         <p id="fpsGameOverText">Reprenez votre souffle et repartez.</p>
+        <div class="summary-grid">
+          <div><span>Vague</span><strong id="fpsSummaryWave">1</strong></div>
+          <div><span>Kills</span><strong id="fpsSummaryKills">0</strong></div>
+          <div><span>Score</span><strong id="fpsSummaryScore">0</strong></div>
+        </div>
         <div class="intro-actions">
           <button class="fps-button primary" id="fpsRestartButton" type="button">Rejouer</button>
           <a class="fps-button subtle" href="index.html">Retour 2D</a>
@@ -83,8 +143,43 @@
       </div>
     </section>
   </div>
+  <script>
+    (function () {
+      const loadingText = document.getElementById("fpsLoadingText");
+      const hint = document.getElementById("fpsHint");
+      const sources = [
+        "vendor/three.min.js",
+        "https://cdn.jsdelivr.net/npm/three/build/three.min.js"
+      ];
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.min.js"></script>
-  <script src="fps3d.js" defer></script>
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = src;
+          script.async = true;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.body.appendChild(script);
+        });
+      }
+
+      function loadChain(index) {
+        if (index >= sources.length) {
+          loadingText.textContent = "Impossible de charger le moteur 3D. Verifiez le fichier local ou rechargez la page.";
+          hint.textContent = "Le mode FPS 3D n'a pas pu charger Three.js.";
+          return;
+        }
+        loadingText.textContent = `Chargement du moteur 3D (${index + 1}/${sources.length})...`;
+        loadScript(sources[index])
+          .then(() => {
+            loadingText.textContent = "Moteur 3D charge. Initialisation de la forge...";
+            return loadScript("fps3d.js?v=20260320-3dfix4");
+          })
+          .catch(() => loadChain(index + 1));
+      }
+
+      loadChain(0);
+    })();
+  </script>
 </body>
 </html>

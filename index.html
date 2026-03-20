@@ -24,6 +24,28 @@
       </div>
     </div>
   </div>
+  <section class="platform-gate hidden" id="platformGate" aria-hidden="true">
+    <div class="platform-card">
+      <p class="eyebrow">Plateforme</p>
+      <h2>Choisissez votre profil de jeu</h2>
+      <p class="platform-copy">Ce choix adapte automatiquement l'interface, les controles et le confort de jeu des le demarrage.</p>
+      <div class="platform-grid">
+        <button class="platform-option" id="platformPcButton" type="button" data-platform-choice="pc">
+          <span class="platform-option-icon">PC</span>
+          <strong>Mode PC</strong>
+          <small>HUD complet, clavier / souris, raccourcis rapides et affichage large.</small>
+        </button>
+        <button class="platform-option" id="platformMobileButton" type="button" data-platform-choice="mobile">
+          <span class="platform-option-icon">TEL</span>
+          <strong>Mode Mobile</strong>
+          <small>Interface tactile, boutons confortables et lisibilite renforcee.</small>
+        </button>
+      </div>
+      <div class="platform-footer">
+        <span id="platformHint">Choisissez votre support pour preparer l'experience ideale.</span>
+      </div>
+    </div>
+  </section>
   <div class="app-shell">
     <header class="topbar">
       <div>
@@ -34,9 +56,13 @@
         <div class="pill"><span>Niveau</span><strong id="levelLabel">1</strong></div>
         <div class="pill"><span>Record</span><strong id="bestLevel">1</strong></div>
         <div class="pill"><span>Mode</span><strong id="modeLabel">NIVEAUX</strong></div>
+        <div class="pill"><span>Plateforme</span><strong id="platformLabel">PC</strong></div>
         <div class="pill"><span>Arme</span><strong id="weaponLabel">FUSIL</strong></div>
         <div class="pill"><span>Pieces</span><strong id="coinsLabel">0</strong></div>
         <div class="pill"><span>Puissance</span><strong id="powerLabel">1</strong></div>
+        <div class="pill"><span>Combo</span><strong id="comboLabel">x0</strong></div>
+        <div class="pill"><span>Objectif</span><strong id="objectiveLabel">PURGE</strong></div>
+        <div class="pill"><span>Bonus</span><strong id="bonusLabel">AUCUN</strong></div>
         <div class="pill"><span>Bouclier</span><strong id="shieldLabel">0.0s</strong></div>
         <div class="pill"><span>FPS</span><strong id="fps">0</strong></div>
         <button class="chip-button" id="menuButton" type="button">Menu</button>
@@ -70,6 +96,9 @@
           <div class="mobile-badge"><span>Mode</span><strong id="mobileModeLabel">NIVEAUX</strong></div>
           <div class="mobile-badge"><span>Arme</span><strong id="mobileWeaponLabel">FUSIL</strong></div>
           <div class="mobile-badge"><span>Pieces</span><strong id="mobileCoinsLabel">0</strong></div>
+          <div class="mobile-badge"><span>Combo</span><strong id="mobileComboLabel">x0</strong></div>
+          <div class="mobile-badge"><span>Obj</span><strong id="mobileObjectiveLabel">PURGE</strong></div>
+          <div class="mobile-badge"><span>Boost</span><strong id="mobileBonusLabel">AUCUN</strong></div>
           <button class="mobile-float-button" id="mobileFullscreenButton" type="button">Plein ecran</button>
         </div>
 
@@ -105,7 +134,7 @@
         <div class="control-line"><span>Dash 2</span><kbd>ESPACE</kbd></div>
         <div class="control-line"><span>Pause</span><kbd id="pauseKey">P</kbd></div>
         <div class="control-line"><span>Recommencer</span><kbd id="restartKey">R</kbd></div>
-        <div class="control-line"><span>Armes</span><kbd>&amp; É " '</kbd></div>
+        <div class="control-line"><span>Armes</span><kbd>&amp; E " '</kbd></div>
         <div class="control-line"><span>Arme +</span><kbd>MOLETTE</kbd></div>
         <div class="control-line"><span>Menu</span><kbd>TAB</kbd></div>
         <div class="control-line"><span>Mini-carte</span><kbd>M</kbd></div>
@@ -161,37 +190,67 @@
       </nav>
 
       <section class="tab-panel active" data-panel="play">
+        <div class="hero-layout">
+          <section class="menu-card menu-hero">
+            <div class="menu-hero-copy">
+              <p class="eyebrow">Centre tactique</p>
+              <h3>Nexus tactique</h3>
+              <p class="hero-copy">Une seule porte d'entree pour choisir votre plateforme, armer votre build, personnaliser votre look et lancer la prochaine manche avec une presentation beaucoup plus premium.</p>
+            </div>
+            <div class="hero-badge-row">
+              <span class="hero-chip" id="heroPlatformBadge">Plateforme PC</span>
+              <span class="hero-chip" id="heroModeBadge">Mode Niveaux</span>
+              <span class="hero-chip" id="heroWeaponBadge">Arme Fusil</span>
+              <span class="hero-chip" id="heroSkinBadge">Skin Tank</span>
+            </div>
+            <div class="hero-actions">
+              <button class="hero-button hero-button-primary" id="startButton" type="button">Jouer maintenant</button>
+              <button class="hero-button" type="button" data-open-tab="shop">Boutique elite</button>
+              <button class="hero-button" type="button" data-open-tab="weapons">Arsenal</button>
+              <button class="hero-button" type="button" data-open-tab="skins">Skins</button>
+            </div>
+          </section>
+
+          <aside class="hero-rail">
+            <div class="menu-card hero-stat-card">
+              <span>Plateforme</span>
+              <strong id="heroPlatformValue">PC</strong>
+              <small id="heroPlatformText">HUD large, clavier / souris et rythme maximal.</small>
+            </div>
+            <div class="menu-card hero-stat-card">
+              <span>Record</span>
+              <strong id="heroRecordValue">1</strong>
+              <small>Votre meilleure vague reste memorisee.</small>
+            </div>
+            <div class="menu-card hero-stat-card">
+              <span>Pieces</span>
+              <strong id="heroCoinsValue">0</strong>
+              <small>Servez-vous-en pour les upgrades, skins et armes rares.</small>
+            </div>
+          </aside>
+        </div>
+
         <div class="home-grid">
-          <button class="menu-card home-tile home-play" id="startButton" type="button">
-            <span class="eyebrow">Jouer</span>
-            <strong>Lancer la partie</strong>
-            <small>Reprend direct avec vos choix actuels.</small>
-          </button>
-          <button class="menu-card home-tile" type="button" data-open-tab="shop">
+          <button class="menu-card home-tile home-play" type="button" data-open-tab="shop">
             <span class="eyebrow">Boutique</span>
             <strong>Ameliorations</strong>
-            <small>Depensez vos pieces plus facilement.</small>
+            <small>Boostez votre build avec degats, vie, dash et cadence.</small>
           </button>
           <button class="menu-card home-tile" type="button" data-open-tab="weapons">
             <span class="eyebrow">Armes</span>
             <strong>Arsenal</strong>
-            <small>Achetez et equipez vos armes preferees.</small>
+            <small>Visualisez clairement les raretes, stats et armes equipees.</small>
           </button>
           <button class="menu-card home-tile" type="button" data-open-tab="skins">
             <span class="eyebrow">Skins</span>
-            <strong>Changer de style</strong>
-            <small>Choisissez votre style et votre couleur.</small>
+            <strong>Collection</strong>
+            <small>Raretes, apercus et style equipe mis en avant.</small>
           </button>
           <button class="menu-card home-tile" type="button" data-open-tab="settings">
             <span class="eyebrow">Parametres</span>
             <strong>Reglages</strong>
-            <small>Audio, commandes, records et mobile.</small>
+            <small>Audio, touches, mobile, progression et plateforme.</small>
           </button>
-          <a class="menu-card home-tile home-link home-3d" href="fps3d.html" target="_blank" rel="noreferrer">
-            <span class="eyebrow">Mode 3D</span>
-            <strong>Premiere personne</strong>
-            <small>Essayez une arene volcanique en vue FPS.</small>
-          </a>
         </div>
 
         <div class="grid-two">
@@ -201,6 +260,14 @@
               <button class="menu-choice active" type="button" data-interface="pc">PC</button>
               <button class="menu-choice" type="button" data-interface="mobile">Mobile</button>
               <button class="menu-choice" type="button" data-interface="fps3d">3D FPS</button>
+            </div>
+            <div class="platform-inline">
+              <div>
+                <span class="platform-inline-label">Plateforme memorisee</span>
+                <strong id="platformMemoryLabel">PC</strong>
+              <small id="platformMemoryText">HUD large, clavier / souris et confort premium.</small>
+              </div>
+              <button class="chip-button" id="reopenPlatformButton" type="button">Rechoisir</button>
             </div>
             <p class="hint">Choisissez l'interface a afficher. PC pour clavier/souris, Mobile pour boutons tactiles. `3D FPS` ouvre la version premiere personne.</p>
           </div>
@@ -361,7 +428,7 @@
               <span id="skinSpotlightTag">Classique nerveux</span>
             </div>
             <div class="weapon-mini-shell">
-              <span>Petit arsenal</span>
+              <span>Mini illustrations d'armes</span>
               <div id="skinWeaponMiniGrid" class="weapon-mini-grid"></div>
             </div>
           </div>

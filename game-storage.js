@@ -10,6 +10,7 @@
   const SAVE_VERSION = 2;
 
   const defaultSettings = {
+    platformChoice: "",
     interfaceMode: "pc",
     mode: "levels",
     weapon: "rifle",
@@ -47,12 +48,29 @@
     dashes: 0,
     bosses: 0,
     coinsEarned: 0,
+    powerups: 0,
+    contractsCompleted: 0,
     timePlayed: 0,
     weaponUsage: {
       rifle: 0,
       shotgun: 0,
       sniper: 0,
-      burst: 0
+      burst: 0,
+      laser: 0,
+      grenade: 0,
+      arc: 0,
+      flamethrower: 0,
+      railgun: 0,
+      freeze: 0,
+      gravity: 0,
+      katana: 0,
+      chaos: 0,
+      virus: 0,
+      ricochet: 0,
+      mine: 0,
+      drone: 0,
+      poison: 0,
+      explosiveburst: 0
     }
   };
 
@@ -63,7 +81,7 @@
     dashTier: 0,
     fireTier: 0,
     ownedSkins: ["tank", "duck"],
-    ownedWeapons: ["rifle"]
+    ownedWeapons: ["rifle", "shotgun", "sniper", "burst"]
   };
 
   const defaultHints = {
@@ -103,12 +121,11 @@
   }
 
   function normalizeWeaponUsage(value) {
-    return {
-      rifle: Number(value?.rifle) || 0,
-      shotgun: Number(value?.shotgun) || 0,
-      sniper: Number(value?.sniper) || 0,
-      burst: Number(value?.burst) || 0
-    };
+    const normalized = { ...defaultStats.weaponUsage };
+    Object.keys(normalized).forEach((key) => {
+      normalized[key] = Number(value?.[key]) || 0;
+    });
+    return normalized;
   }
 
   function loadSettings() {
@@ -156,19 +173,23 @@
 
   function loadProgress() {
     const parsed = unwrapStoredPayload(readRawJson(STORAGE_KEYS.progress));
+    const starterWeapons = ["rifle", "shotgun", "sniper", "burst"];
     return {
       ...cloneValue(defaultProgress),
       ...(parsed || {}),
       ownedSkins: Array.isArray(parsed?.ownedSkins) ? [...new Set(parsed.ownedSkins)] : [...defaultProgress.ownedSkins],
-      ownedWeapons: Array.isArray(parsed?.ownedWeapons) ? [...new Set(parsed.ownedWeapons)] : [...defaultProgress.ownedWeapons]
+      ownedWeapons: Array.isArray(parsed?.ownedWeapons)
+        ? [...new Set([...starterWeapons, ...parsed.ownedWeapons])]
+        : [...defaultProgress.ownedWeapons]
     };
   }
 
   function saveProgress(progress) {
+    const starterWeapons = ["rifle", "shotgun", "sniper", "burst"];
     writeStructuredJson(STORAGE_KEYS.progress, {
       ...progress,
       ownedSkins: [...new Set(progress?.ownedSkins || defaultProgress.ownedSkins)],
-      ownedWeapons: [...new Set(progress?.ownedWeapons || defaultProgress.ownedWeapons)]
+      ownedWeapons: [...new Set([...starterWeapons, ...(progress?.ownedWeapons || defaultProgress.ownedWeapons)])]
     });
   }
 
