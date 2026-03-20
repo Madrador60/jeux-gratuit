@@ -52,7 +52,7 @@ body {
   pointer-events: none;
   z-index: 8;
   background:
-    radial-gradient(circle at center, transparent 42%, rgba(0, 0, 0, 0.22) 78%, rgba(0, 0, 0, 0.52) 100%),
+    radial-gradient(circle at center, transparent 46%, rgba(0, 0, 0, 0.14) 78%, rgba(0, 0, 0, 0.36) 100%),
     radial-gradient(circle at center, rgba(255, 80, 48, var(--hurt, 0)), transparent 62%),
     radial-gradient(circle at center, rgba(103, 236, 255, var(--dash, 0)), transparent 58%);
 }
@@ -168,6 +168,45 @@ body {
   margin-top: 6px;
   color: var(--muted);
   font-size: 0.96rem;
+}
+
+.fps-focus {
+  position: fixed;
+  left: 50%;
+  bottom: max(34px, calc(env(safe-area-inset-bottom) + 34px));
+  transform: translateX(-50%);
+  width: min(460px, calc(100vw - 34px));
+  z-index: 19;
+  pointer-events: none;
+}
+
+.focus-card {
+  padding: 18px 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(103, 236, 255, 0.2);
+  background:
+    radial-gradient(circle at top, rgba(103, 236, 255, 0.14), transparent 52%),
+    linear-gradient(180deg, rgba(10, 16, 22, 0.92), rgba(6, 10, 15, 0.9));
+  box-shadow:
+    0 20px 58px rgba(0, 0, 0, 0.36),
+    0 0 26px rgba(103, 236, 255, 0.08);
+  backdrop-filter: blur(18px);
+  text-align: center;
+  pointer-events: auto;
+}
+
+.focus-card strong,
+.focus-card p {
+  display: block;
+}
+
+.focus-card strong {
+  font-size: 1.34rem;
+}
+
+.focus-card p {
+  margin: 8px 0 14px;
+  color: var(--muted);
 }
 
 @keyframes fpsMomentIn {
@@ -555,6 +594,14 @@ body.locked .fps-intro {
 
   .crosshair {
     opacity: 0.65;
+  }
+
+  .fps-focus {
+    bottom: max(18px, calc(env(safe-area-inset-bottom) + 18px));
+  }
+
+  .focus-card {
+    padding: 16px;
   }
 }
 

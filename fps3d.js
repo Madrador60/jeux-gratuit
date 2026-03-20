@@ -37,6 +37,10 @@
     momentTag: document.getElementById("fpsMomentTag"),
     momentTitle: document.getElementById("fpsMomentTitle"),
     momentText: document.getElementById("fpsMomentText"),
+    focusPrompt: document.getElementById("fpsFocusPrompt"),
+    focusTitle: document.getElementById("fpsFocusTitle"),
+    focusText: document.getElementById("fpsFocusText"),
+    focusButton: document.getElementById("fpsFocusButton"),
     arenaFlavor: document.getElementById("fpsArenaFlavor"),
     summaryWave: document.getElementById("fpsSummaryWave"),
     summaryKills: document.getElementById("fpsSummaryKills"),
@@ -87,10 +91,20 @@
       const x = Math.max(0, Math.floor(renderer.domElement.width * 0.5));
       const y = Math.max(0, Math.floor(renderer.domElement.height * 0.45));
       gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      const debugTarget = new THREE.Vector3(0, 4.2, PLAYER_SPAWN.z - 10).project(camera);
+      const cameraForward = new THREE.Vector3();
+      camera.getWorldDirection(cameraForward);
+      ui.canvas?.setAttribute("data-rig", `${playerRig.position.x.toFixed(2)},${playerRig.position.y.toFixed(2)},${playerRig.position.z.toFixed(2)}|${playerRig.rotation.y.toFixed(2)}|${playerRig.quaternion.x.toFixed(2)},${playerRig.quaternion.y.toFixed(2)},${playerRig.quaternion.z.toFixed(2)},${playerRig.quaternion.w.toFixed(2)}`);
+      ui.canvas?.setAttribute("data-vel", `${player.velocity.x.toFixed(2)},${player.velocity.z.toFixed(2)}`);
+      ui.canvas?.setAttribute("data-pos", `${camera.position.x.toFixed(2)},${camera.position.y.toFixed(2)},${camera.position.z.toFixed(2)}`);
+      ui.canvas?.setAttribute("data-rot", `${camera.rotation.x.toFixed(2)},${camera.rotation.y.toFixed(2)},${camera.rotation.z.toFixed(2)}`);
+      ui.canvas?.setAttribute("data-quat", `${camera.quaternion.x.toFixed(2)},${camera.quaternion.y.toFixed(2)},${camera.quaternion.z.toFixed(2)},${camera.quaternion.w.toFixed(2)}`);
       ui.canvas?.setAttribute("data-sample", `${px[0]},${px[1]},${px[2]},${px[3]}`);
       ui.canvas?.setAttribute("data-cam", `${state.yaw.toFixed(3)},${state.pitch.toFixed(3)}`);
       ui.canvas?.setAttribute("data-calls", String(renderer.info.render.calls));
-      setHint(`DBG px ${px[0]},${px[1]},${px[2]} | objs ${scene.children.length} | pos ${playerRig.position.x.toFixed(1)},${playerRig.position.z.toFixed(1)}`);
+      ui.canvas?.setAttribute("data-target", `${debugTarget.x.toFixed(2)},${debugTarget.y.toFixed(2)},${debugTarget.z.toFixed(2)}`);
+      ui.canvas?.setAttribute("data-forward", `${cameraForward.x.toFixed(2)},${cameraForward.y.toFixed(2)},${cameraForward.z.toFixed(2)}`);
+      setHint(`DBG px ${px[0]},${px[1]},${px[2]} | target ${debugTarget.x.toFixed(2)},${debugTarget.y.toFixed(2)} | dir ${cameraForward.x.toFixed(2)},${cameraForward.y.toFixed(2)},${cameraForward.z.toFixed(2)}`);
     } catch (error) {
       ui.canvas?.setAttribute("data-sample", `error:${error?.message || error}`);
       setHint(`DBG erreur pixel ${error?.message || error}`);
@@ -117,6 +131,18 @@
   function revealIntro() {
     ui.enterButton?.removeAttribute("disabled");
     ui.intro?.classList.remove("hidden");
+  }
+
+  function syncFocusPrompt() {
+    const visible =
+      !!ui.focusPrompt &&
+      state.sessionRequested &&
+      !state.locked &&
+      !state.gameOver &&
+      ui.loading?.classList.contains("hidden") &&
+      ui.intro?.classList.contains("hidden");
+    ui.focusPrompt?.classList.toggle("hidden", !visible);
+    ui.focusPrompt?.setAttribute("aria-hidden", String(!visible));
   }
 
   if (!THREE) {
@@ -191,13 +217,14 @@
   ui.canvas?.setAttribute("data-engine", `three.js ${renderer.capabilities.isWebGL2 ? "webgl2" : "webgl1"}`);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x111b24);
-  scene.fog = new THREE.FogExp2(0x150c0a, 0.0062);
+  scene.background = new THREE.Color(0x172936);
+  scene.fog = new THREE.FogExp2(0x16242f, 0.0048);
+  const PLAYER_SPAWN = { x: 0, y: 0, z: 70 };
 
   const camera = new THREE.PerspectiveCamera(76, window.innerWidth / window.innerHeight, 0.1, 260);
   camera.rotation.order = "YXZ";
   const playerRig = new THREE.Group();
-  playerRig.position.set(0, 0, 34);
+  playerRig.position.set(PLAYER_SPAWN.x, PLAYER_SPAWN.y, PLAYER_SPAWN.z);
   scene.add(playerRig);
   playerRig.add(camera);
   camera.position.set(0, 1.82, 0);
@@ -500,8 +527,8 @@
     map: basaltTexture,
     roughness: 0.88,
     metalness: 0.06,
-    emissive: new THREE.Color(0x0d1821),
-    emissiveIntensity: 0.58
+    emissive: new THREE.Color(0x17313e),
+    emissiveIntensity: 0.96
   });
   const wallMaterial = new THREE.MeshStandardMaterial({
     color: 0x342f38,
@@ -595,6 +622,7 @@
   }
 
   function buildArena() {
+    const spawnZ = PLAYER_SPAWN.z;
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(180, 180), floorMaterial);
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
@@ -603,18 +631,18 @@
     const grid = new THREE.GridHelper(180, 24, 0x93f0ff, 0x39556a);
     grid.position.y = 0.06;
     grid.material.transparent = true;
-    grid.material.opacity = 0.42;
+    grid.material.opacity = 0.68;
     scene.add(grid);
 
     const runway = new THREE.Mesh(
       new THREE.PlaneGeometry(18, 96),
-      new THREE.MeshBasicMaterial({ color: 0x102533, transparent: true, opacity: 0.58 })
+      new THREE.MeshBasicMaterial({ color: 0x194760, transparent: true, opacity: 0.74 })
     );
     runway.rotation.x = -Math.PI / 2;
     runway.position.set(0, 0.08, -8);
     scene.add(runway);
 
-    const laneMaterial = new THREE.MeshBasicMaterial({ color: 0x8ef6ff, transparent: true, opacity: 0.84 });
+    const laneMaterial = new THREE.MeshBasicMaterial({ color: 0xb1fbff, transparent: true, opacity: 0.98 });
     [
       [-5.4, -8],
       [0, -8],
@@ -628,13 +656,13 @@
 
     const stagingPad = new THREE.Mesh(
       new THREE.PlaneGeometry(34, 42),
-      new THREE.MeshBasicMaterial({ color: 0x143447, transparent: true, opacity: 0.82 })
+      new THREE.MeshBasicMaterial({ color: 0x1c5772, transparent: true, opacity: 0.96 })
     );
     stagingPad.rotation.x = -Math.PI / 2;
     stagingPad.position.set(0, 0.09, 22);
     scene.add(stagingPad);
 
-    const stagingLineMaterial = new THREE.MeshBasicMaterial({ color: 0x8cf7ff, transparent: true, opacity: 0.95 });
+    const stagingLineMaterial = new THREE.MeshBasicMaterial({ color: 0xc7fdff, transparent: true, opacity: 1 });
     [
       [0, 0.12, 2.8, 24],
       [-11.5, 0.12, 0.32, 38],
@@ -647,6 +675,50 @@
       scene.add(line);
     });
 
+    const spawnGlow = new THREE.Mesh(
+      new THREE.PlaneGeometry(18, 18),
+      new THREE.MeshBasicMaterial({ color: 0x57dfff, transparent: true, opacity: 0.2, side: THREE.DoubleSide })
+    );
+    spawnGlow.rotation.x = -Math.PI / 2;
+    spawnGlow.position.set(0, 0.11, spawnZ - 7);
+    scene.add(spawnGlow);
+
+    const spawnChevronMaterial = new THREE.MeshBasicMaterial({
+      color: 0xcffeff,
+      transparent: true,
+      opacity: 0.96,
+      side: THREE.DoubleSide
+    });
+    [
+      [0, 0.14, spawnZ - 5.4, 7.2, 0.34, 0],
+      [-2.1, 0.14, spawnZ - 7.8, 4.6, 0.26, Math.PI / 4.4],
+      [2.1, 0.14, spawnZ - 7.8, 4.6, 0.26, -Math.PI / 4.4],
+      [0, 0.14, spawnZ - 10.8, 2.4, 0.34, 0]
+    ].forEach(([x, y, z, width, depth, rot]) => {
+      const chevron = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), spawnChevronMaterial);
+      chevron.rotation.x = -Math.PI / 2;
+      chevron.rotation.z = rot;
+      chevron.position.set(x, y, z);
+      scene.add(chevron);
+    });
+
+    const spawnBeaconLight = new THREE.PointLight(0x8ef6ff, 8.5, 64, 1.8);
+    spawnBeaconLight.position.set(0, 7.8, spawnZ - 10);
+    scene.add(spawnBeaconLight);
+
+    [
+      [-6.2, 3.8, spawnZ - 10],
+      [6.2, 3.8, spawnZ - 10],
+      [0, 4.6, spawnZ - 16]
+    ].forEach(([x, y, z]) => {
+      const pylon = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.3, 0.44, 7.4, 10),
+        new THREE.MeshBasicMaterial({ color: 0x9bfaff, transparent: true, opacity: 0.92 })
+      );
+      pylon.position.set(x, y, z);
+      scene.add(pylon);
+    });
+
     const bridgeMaterial = new THREE.MeshStandardMaterial({
       color: 0x303640,
       roughness: 0.78,
@@ -656,10 +728,10 @@
     });
 
     [
-      [0, 4, -88, 176, 8],
-      [0, 4, 88, 176, 8],
-      [-88, 4, 0, 8, 176],
-      [88, 4, 0, 8, 176],
+      [0, 4, -88, 176, 8, 8],
+      [0, 4, 88, 176, 8, 8],
+      [-88, 4, 0, 8, 8, 176],
+      [88, 4, 0, 8, 8, 176],
       [0, 2.2, 0, 26, 4.4, 18],
       [-36, 2.2, -8, 20, 4.4, 14],
       [34, 2.2, 6, 22, 4.4, 14],
@@ -737,6 +809,68 @@
     arenaRing.position.set(0, 0.05, 0);
     scene.add(arenaRing);
 
+    const spawnZoneRing = new THREE.Mesh(
+      new THREE.RingGeometry(6.8, 7.6, 56),
+      new THREE.MeshBasicMaterial({ color: 0x8ef6ff, transparent: true, opacity: 0.38, side: THREE.DoubleSide })
+    );
+    spawnZoneRing.rotation.x = -Math.PI / 2;
+    spawnZoneRing.position.set(0, 0.1, spawnZ);
+    scene.add(spawnZoneRing);
+
+    const spawnFrameMaterial = new THREE.MeshBasicMaterial({
+      color: 0xa9fbff,
+      transparent: true,
+      opacity: 0.28,
+      side: THREE.DoubleSide
+    });
+    [
+      [0, 8.8, spawnZ - 10, 21, 17.6, 0],
+      [0, 8.8, spawnZ + 10, 21, 17.6, 0],
+      [-10.5, 8.8, spawnZ, 21, 17.6, Math.PI / 2],
+      [10.5, 8.8, spawnZ, 21, 17.6, Math.PI / 2]
+    ].forEach(([x, y, z, width, height, rotY]) => {
+      const panel = new THREE.Mesh(new THREE.PlaneGeometry(width, height), spawnFrameMaterial);
+      panel.position.set(x, y, z);
+      panel.rotation.y = rotY;
+      scene.add(panel);
+    });
+
+    const spawnColumnMaterial = new THREE.MeshBasicMaterial({
+      color: 0xcafcff,
+      transparent: true,
+      opacity: 0.86
+    });
+    [
+      [-8.6, 11.5, spawnZ - 8.8],
+      [8.6, 11.5, spawnZ - 8.8],
+      [-8.6, 11.5, spawnZ + 8.8],
+      [8.6, 11.5, spawnZ + 8.8]
+    ].forEach(([x, y, z]) => {
+      const column = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.38, 22, 10), spawnColumnMaterial);
+      column.position.set(x, y, z);
+      scene.add(column);
+    });
+
+    const spawnMonolithMaterial = new THREE.MeshBasicMaterial({
+      color: 0x7eefff,
+      transparent: true,
+      opacity: 0.88
+    });
+    [
+      [0, 7.2, spawnZ - 10, 3.8, 14.4, 2.8],
+      [0, 7.2, spawnZ + 10, 3.8, 14.4, 2.8],
+      [-12, 7.2, spawnZ, 2.8, 14.4, 3.8],
+      [12, 7.2, spawnZ, 2.8, 14.4, 3.8]
+    ].forEach(([x, y, z, w, h, d]) => {
+      const monolith = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), spawnMonolithMaterial);
+      monolith.position.set(x, y, z);
+      scene.add(monolith);
+    });
+
+    const spawnCoreLight = new THREE.PointLight(0x8ef6ff, 6.4, 36, 2);
+    spawnCoreLight.position.set(0, 4.8, spawnZ);
+    scene.add(spawnCoreLight);
+
     const startMarker = new THREE.Group();
     const startCore = new THREE.Mesh(
       new THREE.BoxGeometry(2.2, 2.2, 2.2),
@@ -750,21 +884,21 @@
     );
     startAura.rotation.x = Math.PI / 2;
     startMarker.add(startAura);
-    startMarker.position.set(0, 0.2, 12);
+    startMarker.position.set(0, 0.2, spawnZ - 14);
     scene.add(startMarker);
 
     const forgeGate = new THREE.Mesh(
       new THREE.PlaneGeometry(18, 9),
       new THREE.MeshBasicMaterial({ color: 0xff9f67, transparent: true, opacity: 0.28, side: THREE.DoubleSide })
     );
-    forgeGate.position.set(0, 5.4, 6);
+    forgeGate.position.set(0, 5.4, spawnZ - 18);
     scene.add(forgeGate);
 
     const gatePostMaterial = new THREE.MeshBasicMaterial({ color: 0x8cecff, transparent: true, opacity: 0.82 });
     [
-      [-9.2, 4.8, 6, 0.4, 9.4, 0.4],
-      [9.2, 4.8, 6, 0.4, 9.4, 0.4],
-      [0, 9.3, 6, 18.8, 0.34, 0.34]
+      [-9.2, 4.8, spawnZ - 18, 0.4, 9.4, 0.4],
+      [9.2, 4.8, spawnZ - 18, 0.4, 9.4, 0.4],
+      [0, 9.3, spawnZ - 18, 18.8, 0.34, 0.34]
     ].forEach(([x, y, z, w, h, d]) => {
       const post = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), gatePostMaterial);
       post.position.set(x, y, z);
@@ -775,7 +909,7 @@
       new THREE.BoxGeometry(5.4, 5.4, 5.4),
       new THREE.MeshBasicMaterial({ color: 0x8cf7ff, transparent: true, opacity: 0.9 })
     );
-    nearMonolith.position.set(0, 3.2, 54);
+    nearMonolith.position.set(0, 3.2, spawnZ - 20);
     scene.add(nearMonolith);
 
     const emberGeo = new THREE.BufferGeometry();
@@ -797,10 +931,10 @@
     scene.add(world.emberCloud);
   }
 
-  scene.add(new THREE.AmbientLight(0xffe7cf, 1.08));
-  scene.add(new THREE.HemisphereLight(0xb7ecff, 0xff8845, 1.08));
+  scene.add(new THREE.AmbientLight(0xffecd8, 1.34));
+  scene.add(new THREE.HemisphereLight(0xc8f5ff, 0xff8d4f, 1.34));
 
-  const moonLight = new THREE.DirectionalLight(0xfff0d8, 1.75);
+  const moonLight = new THREE.DirectionalLight(0xfff2df, 2.35);
   moonLight.position.set(18, 28, 12);
   moonLight.castShadow = true;
   moonLight.shadow.mapSize.width = 1024;
@@ -811,7 +945,7 @@
   moonLight.shadow.camera.bottom = -60;
   scene.add(moonLight);
 
-  const lavaFillLight = new THREE.PointLight(0xff6429, 9.2, 150, 2);
+  const lavaFillLight = new THREE.PointLight(0xff7230, 12.8, 170, 1.8);
   lavaFillLight.position.set(0, 9, 0);
   scene.add(lavaFillLight);
 
@@ -2695,6 +2829,7 @@
       ui.moment?.classList.add("hidden");
       ui.moment?.setAttribute("aria-hidden", "true");
     }
+    syncFocusPrompt();
   }
 
   function updateHUD() {
@@ -2762,9 +2897,6 @@
   function requestPointerAndFullscreen() {
     ui.canvas?.focus();
     ui.canvas?.requestPointerLock?.();
-    if (!document.fullscreenElement) {
-      ui.app?.requestFullscreen?.().catch(() => {});
-    }
   }
 
   function toggleFullscreen() {
@@ -2806,20 +2938,21 @@
     player.damageKick = 0;
     player.fovKick = 0;
     player.summonCooldown = 0;
-    playerRig.position.set(0, 0, 34);
+  playerRig.position.set(PLAYER_SPAWN.x, PLAYER_SPAWN.y, PLAYER_SPAWN.z);
     state.yaw = 0;
-    state.pitch = -0.42;
+    state.pitch = 0.38;
     setWeapon(weaponIsUnlocked("pulse") ? state.weaponId : "pulse", true);
     camera.position.set(0, 1.82, 0);
     playerRig.rotation.y = state.yaw;
     camera.rotation.set(state.pitch, 0, 0);
     camera.fov = currentWeaponConfig().zoomFov || 76;
     camera.updateProjectionMatrix();
-    scene.fog.density = 0.0062;
-    renderer.toneMappingExposure = 1.16;
+    scene.fog.density = 0.0048;
+    renderer.toneMappingExposure = 1.22;
     ui.gameOver?.classList.add("hidden");
     spawnWave(1);
     updateHUD();
+    syncFocusPrompt();
   }
 
   function startSession() {
@@ -2833,8 +2966,9 @@
         resetSession();
       }
       requestPointerAndFullscreen();
-      showMoment("Forge Omega", "Pointez, dash et tenez la ligne. Le mode FPS est verrouille.", "Depart", 2.4);
-      setHint("Souris activee. Nettoyez la forge.");
+      showMoment("Forge Omega", "Pointez, dash et tenez la ligne. Cliquez au centre si la souris se libere.", "Depart", 2.6);
+      setHint("Cliquez dans la scene pour verrouiller la souris et entrer dans le combat.");
+      syncFocusPrompt();
     } catch (error) {
       console.error("[fps3d] lancement impossible", error);
       state.sessionRequested = false;
@@ -2935,10 +3069,12 @@
     } else if (state.sessionRequested && !state.gameOver) {
       setHint("Cliquez dans la scene pour reprendre.");
     }
+    syncFocusPrompt();
   });
 
   document.addEventListener("pointerlockerror", () => {
     setHint("La souris n'a pas pu etre verrouillee. Recliquez dans la scene.");
+    syncFocusPrompt();
   });
 
   function handlePrimaryFirePress(event) {
@@ -3004,10 +3140,20 @@
     toggleFullscreen();
   });
 
+  ui.focusButton?.addEventListener("click", () => {
+    ensureAudio();
+    primeAudio();
+    if (!state.sessionRequested) {
+      startSession();
+      return;
+    }
+    requestPointerAndFullscreen();
+  });
+
   window.addEventListener("resize", resize);
 
   state.yaw = 0;
-  state.pitch = -0.42;
+  state.pitch = 0.38;
   playerRig.rotation.y = state.yaw;
   camera.rotation.set(state.pitch, 0, 0);
   setWeapon(weaponIsUnlocked("pulse") ? state.weaponId : "pulse", true);

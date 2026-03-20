@@ -47,6 +47,15 @@
       <small id="fpsMomentText">Tenez la ligne et maintenez la pression.</small>
     </section>
 
+    <section class="fps-focus hidden" id="fpsFocusPrompt" aria-hidden="true">
+      <div class="focus-card">
+        <span class="eyebrow">Controle souris</span>
+        <strong id="fpsFocusTitle">Cliquez pour reprendre la souris</strong>
+        <p id="fpsFocusText">Le combat 3D reprend seulement quand la souris est verrouillee dans la scene.</p>
+        <button class="fps-button primary" id="fpsFocusButton" type="button">Reprendre le controle</button>
+      </div>
+    </section>
+
     <div class="crosshair" id="fpsCrosshair" aria-hidden="true">
       <span class="crosshair-ring"></span>
       <span class="crosshair-dot"></span>
@@ -173,7 +182,7 @@
         loadScript(sources[index])
           .then(() => {
             loadingText.textContent = "Moteur 3D charge. Initialisation de la forge...";
-            return loadScript("fps3d.js?v=20260320-3dfix4");
+            return loadScript("fps3d.js?v=20260320-3dfix5");
           })
           .catch(() => loadChain(index + 1));
       }
